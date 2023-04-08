@@ -1,10 +1,35 @@
-from minio import Minio
 from flask import Flask, request, abort, jsonify
 from werkzeug.exceptions import HTTPException
+import mysql.connector
+from mysql.connector import errorcode
 import json
-import csv
+import configparser
 
-import os
+def connect_db():
+    config = configparser.ConfigParser()
+    config.read("config.cfg")
+
+    user = config["db_access"]["AWS_MYSQL_USR"]
+    password = config["db_access"]["AWS_MYSQL_PWD"]
+    host = config["db_access"]["AWS_MYSQL_END_POINT"]
+    port = config["db_access"]["AWS_MYSQL_PORT"]
+    db_name = config["db_access"]["AWS_MYSQL_DB_NAME"]
+
+    try:
+        cnx = mysql.connector.connect(user = user,
+                                    password = password,
+                                    host = host,
+                                    port = port,
+                                    database = db_name)
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Something is wrong with your user name or password")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("Database does not exist")
+        else:
+            print(err)
+
+    return cnx
 
 app = Flask(__name__)
 
@@ -28,49 +53,35 @@ def handle_exception(e):
     response.content_type = "application/json"
     return response
 
-@app.route("/getMinioObject")
-def get_minio_object():
-    bucket_download = request.args.get('bucket', 'valorPadraoSeNaoInserirNenhumDadoNaAPI')
-    object_download = request.args.get('object', '')
+# @app.route("/getMinioObject")
+# def get_data():
+#     bucket_download = request.args.get('bucket', 'valorPadraoSeNaoInserirNenhumDadoNaAPI')
+#     object_download = request.args.get('object', '')
 
-    # Seta o access para o Minio
-    client = Minio(
-        endpoint =
-        access_key =
-        secret_key =
-        secure = False
-    )
+@app.route("/getDataProdutos")
+def get_data():
+    cnx = connect_db()
+    
+    cursor = cnx.cursor(buffered = True)
 
-    # Eh nesse bucket name passado por parametro no request em que vai procuprar o arquivo
-    bucket_name = bucket_download
-    file_return_name = ""
+    query = ("SELECT * FROM produtos")
 
-    # data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/data/miniodata")
+    cursor.execute(query)
+    
+    list_tuple = cursor.fetchall()
 
-    # Verifica se o bucket com o nome passado existe
-    found = client.bucket_exists(bucket_name)
-    if not found:
-        raise Exception("Nao existe o bucket com nome " + bucket_name)
+    list_dict = []
+    for tuple in list_tuple:
+        # Da para fazer assim no dic pq as colunas da tabela n mudam, mas se mudar vai ter q mudar aqui tbm
+        dict = {
+            "id": tuple[0],
+            "nome": tuple[1],
+            "quantidade": tuple[2]
+        }
+        list_dict.append(dict)
+    
+    return json.dumps(list_dict, indent = 4)
 
-    # Para disponibilizar os dados, ele vai baixar no diretorio local e depois disponibilizar em json
-    objects = client.list_objects(bucket_name = bucket_name, recursive = True)
-    for obj in objects:
-        # Se o nome do objeto achado no minio for "parecido" com o inserido, baixa ele
-        if object_download in obj.object_name:
-            # Esse file_path eh o nome do arquivo em que sera baixado, eh baixado em .txt
-            client.fget_object(bucket_name = obj.bucket_name, object_name = obj.object_name, file_path = obj.object_name)
-            # Nome do arquivo em que vai retornar, teoricamente teria somente 1...
-            file_return_name = obj.object_name
-
-    # Retornando um unico arquivo do tipo csv
-    # ISSO AQUI PODE MUDAR, PORQUE O ARQUIVO DO MINIO PODE JA ESTAR EM CSV OU OUTRO ARQUIVO FACIL DE SER MANDADO!!!!!!!!
-    jsonString = ""
-    with open(file_return_name, encoding = "latin1") as csvf:
-        jsonArray = []
-        csvReader = csv.DictReader(csvf)
-        for row in csvReader:
-            jsonArray.append(row)
-
-        jsonString = json.dumps(jsonArray, indent = 4)
-
-    return jsonString
+@app.route("/Teste")
+def teste():
+    return "Hello Another World"
