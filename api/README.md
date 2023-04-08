@@ -5,7 +5,7 @@ Se n√£o tiver, de uma olhada nos aquivos Pipfile para ver quais bibliotecas ser√
 
 ## Para rodar localmente
 
-Simplesmente ```flask --app nomeDoAppQQuerDar run```
+Simplesmente ```flask --app nomeDoScriptPythonFlask run```
 
 # Variaveis de ambiente
 
