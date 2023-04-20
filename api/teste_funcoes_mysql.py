@@ -76,3 +76,16 @@ print(config["db_access"]["AWS_MYSQL_DB_NAME"])
 cursor.close()
 # conn.close()
 cnx.close()
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 - Create the requirements for python librarys

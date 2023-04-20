@@ -82,6 +82,6 @@ def get_data():
     
     return json.dumps(list_dict, indent = 4)
 
-@app.route("/Teste")
+@app.route("/")
 def teste():
     return "Hello Another World"
