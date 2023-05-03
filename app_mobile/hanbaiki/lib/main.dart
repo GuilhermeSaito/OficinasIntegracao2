@@ -188,7 +188,8 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(height: 20),
                     TextButton(
                       onPressed: () {
-                        // navigate to another page
+                        // --------------- Transicao de tela para a tela de cadastro
+                        Navigator.of(context).push(_createRouteRegistrar());
                       },
                       child: Text(
                         'NÃO TEM LOGUIN? CADASTRE-SE',
@@ -207,4 +208,27 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+}
+
+// ----------------------- Pag de cadastro
+class CadastroPage extends StatelessWidget {
+  const CadastroPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Text('Hello Another World'),
+    );
+  }
+}
+
+// ----------------------- Colocando cada rota para cada tela
+Route _createRouteRegistrar() {
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) =>
+        const CadastroPage(),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return child;
+    },
+  );
 }
