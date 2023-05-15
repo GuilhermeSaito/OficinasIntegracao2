@@ -183,13 +183,32 @@ class _LoginPageState extends State<LoginPage> {
                           print('Password: $_password');
                           // TODO: Implement login logic here
                         }
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            transitionDuration: Duration(seconds: 1),
+                            pageBuilder: (_, __, ___) => MainPage(),
+                            transitionsBuilder: (_, animation, __, child) =>
+                                FadeTransition(
+                                    opacity: animation, child: child),
+                          ),
+                        );
                       },
                     ),
                     SizedBox(height: 20),
                     TextButton(
                       onPressed: () {
                         // --------------- Transicao de tela para a tela de cadastro
-                        Navigator.of(context).push(_createRouteRegistrar());
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            transitionDuration: Duration(seconds: 1),
+                            pageBuilder: (_, __, ___) => const CadastroPage(),
+                            transitionsBuilder: (_, animation, __, child) =>
+                                FadeTransition(
+                                    opacity: animation, child: child),
+                          ),
+                        );
                       },
                       child: Text(
                         'NÃO TEM LOGUIN? CADASTRE-SE',
@@ -210,6 +229,58 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+// ----------------------- Pag Principal
+class MainPage extends StatelessWidget {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void _openDrawer() {
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(title: Text('Main Page')),
+      body: Center(
+        child: Text('Main Page Content'),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'Menu',
+                style: TextStyle(fontSize: 24, color: Colors.white),
+              ),
+            ),
+            ListTile(
+              title: Text('Option 1'),
+              onTap: () {
+                // Handle option 1 press
+              },
+            ),
+            ListTile(
+              title: Text('Option 2'),
+              onTap: () {
+                // Handle option 2 press
+              },
+            ),
+            ListTile(
+              title: Text('Option 3'),
+              onTap: () {
+                // Handle option 3 press
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ----------------------- Pag de cadastro
 class CadastroPage extends StatelessWidget {
   const CadastroPage({super.key});
@@ -220,15 +291,4 @@ class CadastroPage extends StatelessWidget {
       child: Text('Hello Another World'),
     );
   }
-}
-
-// ----------------------- Colocando cada rota para cada tela
-Route _createRouteRegistrar() {
-  return PageRouteBuilder(
-    pageBuilder: (context, animation, secondaryAnimation) =>
-        const CadastroPage(),
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return child;
-    },
-  );
 }
