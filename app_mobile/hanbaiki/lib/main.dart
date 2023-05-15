@@ -241,7 +241,9 @@ class MainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(title: Text('Main Page')),
+      appBar: AppBar(
+        title: Text('Main Page'),
+      ),
       body: Center(
         child: Text('Main Page Content'),
       ),
@@ -256,20 +258,156 @@ class MainPage extends StatelessWidget {
                 style: TextStyle(fontSize: 24, color: Colors.white),
               ),
             ),
+            // Linha horizontal para separar o header com as opcoes
+            Container(
+              height: 1,
+              color: Colors.grey,
+              margin: EdgeInsets.symmetric(horizontal: 16),
+            ),
+            // 1 topico
+            const ListTile(
+              title: Text(
+                'Information',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            // ------ Editar o perfil
             ListTile(
-              title: Text('Option 1'),
+              leading: Icon(Icons.edit),
+              title: Text(
+                'Edit Profile',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
               onTap: () {
                 // Handle option 1 press
               },
             ),
+            // ------ Username
             ListTile(
-              title: Text('Option 2'),
+              leading: Icon(Icons.person),
+              title: Text(
+                'Username',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
               onTap: () {
                 // Handle option 2 press
               },
             ),
+            // ------ Email
             ListTile(
-              title: Text('Option 3'),
+              leading: Icon(Icons.email), // Add the email icon here
+              title: Text(
+                'E-mail',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+              onTap: () {
+                // Handle option 3 press
+              },
+            ),
+            // ------ Senha
+            ListTile(
+              leading: Icon(Icons.lock),
+              title: Text(
+                'Password',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+              onTap: () {
+                // Handle option 3 press
+              },
+            ),
+            // Linha horizontal para separar o header com as opcoes
+            Container(
+              height: 1,
+              color: Colors.grey,
+              margin: EdgeInsets.symmetric(horizontal: 16),
+            ),
+            // 2 topico
+            const ListTile(
+              title: Text(
+                'Menu',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            // ------ Produtos
+            ListTile(
+              leading: Icon(Icons.block),
+              title: Text(
+                'Produtos',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+              onTap: () {
+                // Handle option 1 press
+              },
+            ),
+            // ------ Vendedores
+            ListTile(
+              leading: Icon(Icons.person_2),
+              title: Text(
+                'Vendedores',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+              onTap: () {
+                // Handle option 2 press
+              },
+            ),
+            // ------ Historico
+            ListTile(
+              leading: Icon(Icons.history), // Add the email icon here
+              title: Text(
+                'Historico',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+              onTap: () {
+                // Handle option 3 press
+              },
+            ),
+            // ------ Carrinho
+            ListTile(
+              leading: Icon(Icons.shopping_basket),
+              title: Text(
+                'Carrinho',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
               onTap: () {
                 // Handle option 3 press
               },
