@@ -4,6 +4,14 @@ void main() {
   runApp(const MyApp());
 }
 
+// ---------------------------------- FUNCAO PARA VALIDAR O LOGIN
+bool validateLogin(String? email, String? password) {
+  if (email == "Arudina" && password == "Alpheratz") {
+    return true;
+  }
+  return false;
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -181,18 +189,19 @@ class _LoginPageState extends State<LoginPage> {
                           form.save();
                           print('Email: $_email');
                           print('Password: $_password');
-                          // TODO: Implement login logic here
+
+                          if (validateLogin(_email, _password) == true)
+                            Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                transitionDuration: Duration(seconds: 1),
+                                pageBuilder: (_, __, ___) => MainPage(),
+                                transitionsBuilder: (_, animation, __, child) =>
+                                    FadeTransition(
+                                        opacity: animation, child: child),
+                              ),
+                            );
                         }
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration: Duration(seconds: 1),
-                            pageBuilder: (_, __, ___) => MainPage(),
-                            transitionsBuilder: (_, animation, __, child) =>
-                                FadeTransition(
-                                    opacity: animation, child: child),
-                          ),
-                        );
                       },
                     ),
                     SizedBox(height: 20),
