@@ -58,6 +58,7 @@ def handle_exception(e):
 #     bucket_download = request.args.get('bucket', 'valorPadraoSeNaoInserirNenhumDadoNaAPI')
 #     object_download = request.args.get('object', '')
 
+# -------------- Retorna todos os produtos cadastrados na base
 @app.route("/getDataProdutos")
 def get_data():
     cnx = connect_db()
@@ -81,6 +82,54 @@ def get_data():
         list_dict.append(dict)
     
     return json.dumps(list_dict, indent = 4)
+
+# -------------- Retorna todas as pessoas cadastradas na base
+@app.route("/getDataPessoa")
+def get_data():
+    cnx = connect_db()
+    
+    cursor = cnx.cursor(buffered = True)
+
+    query = ("SELECT * FROM pessoas")
+
+    cursor.execute(query)
+    
+    list_tuple = cursor.fetchall()
+
+    list_dict = []
+    for tuple in list_tuple:
+        # Da para fazer assim no dic pq as colunas da tabela n mudam, mas se mudar vai ter q mudar aqui tbm
+        dict = {
+            "id": tuple[0],
+            "nome": tuple[1],
+            "email": tuple[2],
+            "senha": tuple[3],
+            "vendedor": tuple[4],
+        }
+        list_dict.append(dict)
+    
+    return json.dumps(list_dict, indent = 4)
+
+# -------------- Valida o acesso da pessoa
+@app.route("/validateLogin")
+def get_data():
+    email = request.args.get('email', '')
+    password = request.args.get('password', '')
+
+    cnx = connect_db()
+    
+    cursor = cnx.cursor(buffered = True)
+
+    query = ("SELECT id FROM pessoas WHERE email = " + email + " AND senha = " + password)
+
+    cursor.execute(query)
+    
+    list_tuple = cursor.fetchall()
+
+    if len(list_tuple) > 0:
+        return True
+
+    return False
 
 @app.route("/")
 def teste():
