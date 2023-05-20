@@ -9,11 +9,11 @@ def connect_db():
     config = configparser.ConfigParser()
     config.read("config.cfg")
 
-    user = config["db_access"]["AWS_MYSQL_USR"]
-    password = config["db_access"]["AWS_MYSQL_PWD"]
-    host = config["db_access"]["AWS_MYSQL_END_POINT"]
-    port = config["db_access"]["AWS_MYSQL_PORT"]
-    db_name = config["db_access"]["AWS_MYSQL_DB_NAME"]
+    user = config["db_access"]["GOOGLE_MYSQL_USR"]
+    password = config["db_access"]["GOOGLE_MYSQL_PWD"]
+    host = config["db_access"]["GOOGLE_MYSQL_END_POINT"]
+    port = config["db_access"]["GOOGLE_MYSQL_PORT"]
+    db_name = config["db_access"]["GOOGLE_MYSQL_DB_NAME"]
 
     try:
         cnx = mysql.connector.connect(user = user,
@@ -58,30 +58,30 @@ def handle_exception(e):
 #     bucket_download = request.args.get('bucket', 'valorPadraoSeNaoInserirNenhumDadoNaAPI')
 #     object_download = request.args.get('object', '')
 
-# -------------- Retorna todos os produtos cadastrados na base
-@app.route("/getDataProdutos")
-def get_data():
-    cnx = connect_db()
+# # -------------- Retorna todos os produtos cadastrados na base
+# @app.route("/getDataProdutos")
+# def get_data():
+#     cnx = connect_db()
     
-    cursor = cnx.cursor(buffered = True)
+#     cursor = cnx.cursor(buffered = True)
 
-    query = ("SELECT * FROM produtos")
+#     query = ("SELECT * FROM produtos")
 
-    cursor.execute(query)
+#     cursor.execute(query)
     
-    list_tuple = cursor.fetchall()
+#     list_tuple = cursor.fetchall()
 
-    list_dict = []
-    for tuple in list_tuple:
-        # Da para fazer assim no dic pq as colunas da tabela n mudam, mas se mudar vai ter q mudar aqui tbm
-        dict = {
-            "id": tuple[0],
-            "nome": tuple[1],
-            "quantidade": tuple[2]
-        }
-        list_dict.append(dict)
+#     list_dict = []
+#     for tuple in list_tuple:
+#         # Da para fazer assim no dic pq as colunas da tabela n mudam, mas se mudar vai ter q mudar aqui tbm
+#         dict = {
+#             "id": tuple[0],
+#             "nome": tuple[1],
+#             "quantidade": tuple[2]
+#         }
+#         list_dict.append(dict)
     
-    return json.dumps(list_dict, indent = 4)
+#     return json.dumps(list_dict, indent = 4)
 
 # -------------- Retorna todas as pessoas cadastradas na base
 @app.route("/getDataPessoa")
@@ -105,31 +105,33 @@ def get_data():
             "email": tuple[2],
             "senha": tuple[3],
             "vendedor": tuple[4],
+            "nome_produto": tuple[5],
+            "quantidade_produto": tuple[6]
         }
         list_dict.append(dict)
     
     return json.dumps(list_dict, indent = 4)
 
 # -------------- Valida o acesso da pessoa
-@app.route("/validateLogin")
-def get_data():
-    email = request.args.get('email', '')
-    password = request.args.get('password', '')
+# @app.route("/validateLogin")
+# def get_data():
+#     email = request.args.get('email', '')
+#     password = request.args.get('password', '')
 
-    cnx = connect_db()
+#     cnx = connect_db()
     
-    cursor = cnx.cursor(buffered = True)
+#     cursor = cnx.cursor(buffered = True)
 
-    query = ("SELECT id FROM pessoas WHERE email = " + email + " AND senha = " + password)
+#     query = ("SELECT id FROM pessoas WHERE email = " + email + " AND senha = " + password)
 
-    cursor.execute(query)
+#     cursor.execute(query)
     
-    list_tuple = cursor.fetchall()
+#     list_tuple = cursor.fetchall()
 
-    if len(list_tuple) > 0:
-        return True
+#     if len(list_tuple) > 0:
+#         return True
 
-    return False
+#     return False
 
 @app.route("/")
 def teste():
