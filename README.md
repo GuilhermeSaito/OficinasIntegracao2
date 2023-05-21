@@ -8,8 +8,8 @@ Quando o projeto tiver a ideia mais solida, colocarei mais detalhes...
 ## api
 
 - Pasta onde estará o desenvolvimento da api do projeto, feito em flask
-- A api será hospedada na AWS Elastic Beanstalk
-- A api olhará para o Banco de Dados MySQL instanciado na AWS RDS
+- A api será hospedada no Heroku
+- A api olhará para o Banco de Dados MySQL instanciado no Google Cloud Platform
 
 ## app_mobile
 

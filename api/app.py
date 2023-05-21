@@ -4,6 +4,7 @@ import mysql.connector
 from mysql.connector import errorcode
 import json
 import configparser
+import os
 
 def connect_db():
     config = configparser.ConfigParser()
@@ -136,3 +137,6 @@ def get_data():
 @app.route("/")
 def teste():
     return "Hello Another World"
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

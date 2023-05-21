@@ -13,18 +13,25 @@ Simplesmente ```flask --app nomeDoScriptPythonFlask run```
 
 # Para fazer o request em um navegador
 
-- Como a api ta rodando em uma instancia do EC2 da AWS, por enquanto precisa deixar o cli vivo (preciso ver como fazer pra manter a aplicacao viva mesmo saindo do cli mas sem terminar o ec2)
+- A api esta hospedada no heroku, para fazer os deploys, criei outro repositorio para fazer somente os deploys para la, mas todos os codigos devem ser iguais, o link do repositorio eh esse:
 
-- Faz a chamada do ipv4 publico, com o metodo http, e especifica a porta e a rota, por exemplo
+```https://github.com/GuilhermeSaito/api_heroku```
 
-```http://18.230.195.136:8080/getDataProdutos```
+- Para fazer requisicao na api:
+
+```https://hanbaiki-api.herokuapp.com/getDataPessoa```
 
 # Variaveis de ambiente
 
 Para não ficar mostrando os dados publicamente, estou usando variáveis de ambiente para os dados de acesso. Estão localizados no meu .bashrc
 
 
-## Links que usei para configurar o rds da aws
+## Links que usei para configurar o app do heroku e fazer o deploy
 
-- Para deixar o banco de dados disponível para todos (n recomendavel pq todo mundo pode acessar, mas vai precisar dos dados de acesso :v)
-https://stackoverflow.com/questions/31867896/aws-rds-public-access
+- Para saber o que precisa para fazer o deploy e como o script em flask deve ser
+
+```https://levelup.gitconnected.com/how-to-deploy-a-python-flask-api-on-heroku-2e5ddfd943ef```
+
+- Como criar o Procfile
+
+```https://geekyhumans.com/how-to-deploy-flask-api-on-heroku/```
