@@ -1,13 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
 }
 
 // ---------------------------------- FUNCAO PARA VALIDAR O LOGIN
-bool validateLogin(String? email, String? password) {
-  if (email == "Arudina" && password == "Alpheratz") {
-    return true;
+Future<bool> validateLoginApi(
+    String? email, String? password, BuildContext context) async {
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/validateLogin';
+  var parameters = {
+    'email': email,
+    'password': password,
+  };
+
+  var uri = Uri.parse(apiUrl).replace(queryParameters: parameters);
+
+  try {
+    var response = await http.get(uri);
+
+    var responseData = jsonDecode(response.body);
+
+    if (responseData == null || responseData.isEmpty) {
+      // Response is null or empty
+      return false;
+    } else {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: Duration(seconds: 1),
+          pageBuilder: (_, __, ___) => MainPage(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      );
+    }
+    // if (response.statusCode == 200) {
+    //   // Process the response data here
+    // } else {
+    //   // Handle error response
+    // }
+  } catch (e) {
+    print('Deu erro na hora de chamar a api');
+    // Handle exception/error
   }
   return false;
 }
@@ -190,17 +226,7 @@ class _LoginPageState extends State<LoginPage> {
                           print('Email: $_email');
                           print('Password: $_password');
 
-                          if (validateLogin(_email, _password) == true)
-                            Navigator.push(
-                              context,
-                              PageRouteBuilder(
-                                transitionDuration: Duration(seconds: 1),
-                                pageBuilder: (_, __, ___) => MainPage(),
-                                transitionsBuilder: (_, animation, __, child) =>
-                                    FadeTransition(
-                                        opacity: animation, child: child),
-                              ),
-                            );
+                          validateLoginApi(_email, _password, context);
                         }
                       },
                     ),
