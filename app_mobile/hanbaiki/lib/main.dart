@@ -7,7 +7,7 @@ void main() {
 }
 
 // ---------------------------------- FUNCAO PARA VALIDAR O LOGIN
-Future<bool> validateLoginApi(
+Future<void> validateLoginApi(
     String? email, String? password, BuildContext context) async {
   var apiUrl = 'https://hanbaiki-api.herokuapp.com/validateLogin';
   var parameters = {
@@ -23,8 +23,15 @@ Future<bool> validateLoginApi(
     var responseData = jsonDecode(response.body);
 
     if (responseData == null || responseData.isEmpty) {
-      // Response is null or empty
-      return false;
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: Duration(seconds: 1),
+          pageBuilder: (_, __, ___) => CadastroPage(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      );
     } else {
       Navigator.push(
         context,
@@ -43,9 +50,16 @@ Future<bool> validateLoginApi(
     // }
   } catch (e) {
     print('Deu erro na hora de chamar a api');
-    // Handle exception/error
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: Duration(seconds: 1),
+        pageBuilder: (_, __, ___) => CadastroPage(),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
   }
-  return false;
 }
 
 class MyApp extends StatelessWidget {
