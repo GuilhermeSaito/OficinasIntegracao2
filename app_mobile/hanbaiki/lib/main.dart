@@ -23,13 +23,19 @@ Future<void> validateLoginApi(
     var responseData = jsonDecode(response.body);
 
     if (responseData == null || responseData.isEmpty) {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          transitionDuration: Duration(seconds: 1),
-          pageBuilder: (_, __, ___) => CadastroPage(),
-          transitionsBuilder: (_, animation, __, child) =>
-              FadeTransition(opacity: animation, child: child),
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Erro na validação do login'),
+          content: Text("Resposta vazia da API"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
         ),
       );
     } else {
@@ -43,23 +49,121 @@ Future<void> validateLoginApi(
         ),
       );
     }
-    // if (response.statusCode == 200) {
-    //   // Process the response data here
-    // } else {
-    //   // Handle error response
-    // }
   } catch (e) {
-    print('Deu erro na hora de chamar a api');
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: Duration(seconds: 1),
-        pageBuilder: (_, __, ___) => CadastroPage(),
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Erro na validação do login'),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('OK'),
+          ),
+        ],
       ),
     );
   }
+}
+
+// ---------------------------------- FUNCAO PARA CADASTRAR NOVO ACESSO
+Future<void> signUp(
+  String? nome,
+  String? email,
+  String? password,
+  int? _vendedor,
+  BuildContext context,
+  Function(bool) dialogCallback,
+) async {
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/insertDataPessoa';
+  var parameters = {
+    'nome': nome,
+    'email': email,
+    'password': password,
+    'vendedor': _vendedor.toString(),
+  };
+
+  var uri = Uri.parse(apiUrl).replace(queryParameters: parameters);
+
+  final GlobalKey<State> _key = GlobalKey<State>();
+
+  try {
+    var response = await http.get(uri);
+
+    var responseData = jsonDecode(response.body);
+    if (responseData == null || responseData.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Erro no cadastro'),
+          content:
+              Text("Erro ao cadastrar o novo usuario, retorno null da api"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Cadastro Concluido com Sucesso!'),
+          content: Text(
+              "Seu cadastro foi concluido com sucesso, agora podera seguir na aplicacao com o email e a senha informados, utilize o botao voltar para seguir na pagina de login." +
+                  responseData.toString()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Erro no cadastro'),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(true); // Close the dialog
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Espera um pouco...'),
+      content: Text(''),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(true); // Close the dialog
+          },
+          child: Text('OK'),
+        ),
+      ],
+    ),
+  );
+
+  dialogCallback(true);
 }
 
 class MyApp extends StatelessWidget {
@@ -179,11 +283,6 @@ class _LoginPageState extends State<LoginPage> {
                         onSaved: (String? value) {
                           _email = value;
                         },
-                        validator: (String? value) {
-                          return (value != null && value.contains('@'))
-                              ? 'Do not use the @ char.'
-                              : null;
-                        },
                       ),
                     ),
                     SizedBox(
@@ -206,19 +305,6 @@ class _LoginPageState extends State<LoginPage> {
                           border: InputBorder.none,
                         ),
                         obscureText: true,
-                        // validator: (value) {
-                        //   if (value == null || value.isEmpty) {
-                        //     return 'Please enter your password';
-                        //   } else if (value.length < 8) {
-                        //     return 'Password must be at least 8 characters long';
-                        //   }
-                        //   return null;
-                        // },
-                        validator: (String? value) {
-                          return (value != null && value.contains('@'))
-                              ? 'Do not use the @ char.'
-                              : null;
-                        },
                         onSaved: (String? value) {
                           _password = value;
                         },
@@ -237,9 +323,6 @@ class _LoginPageState extends State<LoginPage> {
                         final form = _formKey.currentState;
                         if (form != null) {
                           form.save();
-                          print('Email: $_email');
-                          print('Password: $_password');
-
                           validateLoginApi(_email, _password, context);
                         }
                       },
@@ -252,7 +335,7 @@ class _LoginPageState extends State<LoginPage> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(seconds: 1),
-                            pageBuilder: (_, __, ___) => const CadastroPage(),
+                            pageBuilder: (_, __, ___) => CadastroPage(),
                             transitionsBuilder: (_, animation, __, child) =>
                                 FadeTransition(
                                     opacity: animation, child: child),
@@ -470,12 +553,157 @@ class MainPage extends StatelessWidget {
 
 // ----------------------- Pag de cadastro
 class CadastroPage extends StatelessWidget {
-  const CadastroPage({super.key});
+  final _formKey = GlobalKey<FormState>();
+
+  // Nome, email, password, vendedor
+  String? _nome;
+  String? _email;
+  String? _password;
+  int? _vendedor;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Text('Hello Another World'),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      // navigatorKey: navigatorKey,
+      home: Scaffold(
+          body: Container(
+              child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 20.0,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(45.0),
+                color: Colors.pink[100],
+              ),
+              width: MediaQuery.of(context).size.width * 2 / 3,
+              // ---------------------- EMAIL BOX
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'NOME',
+                  labelStyle: TextStyle(
+                    color: Colors.white, // set the color of the label to white
+                  ),
+                  border: InputBorder.none,
+                  // Da pra colocar uns frurus aqui
+                ),
+                onSaved: (String? value) {
+                  _nome = value;
+                },
+              ),
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(45.0),
+                color: Colors.pink[100],
+              ),
+              width: MediaQuery.of(context).size.width * 2 / 3,
+              // ---------------------- EMAIL BOX
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'E-MAIL',
+                  labelStyle: TextStyle(
+                    color: Colors.white, // set the color of the label to white
+                  ),
+                  border: InputBorder.none,
+                  // Da pra colocar uns frurus aqui
+                ),
+                onSaved: (String? value) {
+                  _email = value;
+                },
+              ),
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20.0),
+                color: Colors.pink[100],
+              ),
+              width: MediaQuery.of(context).size.width * 2 / 3,
+              // ---------------------- PASSWORD BOX
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'SENHA',
+                  labelStyle: TextStyle(
+                    color: Colors.white, // set the color of the label to white
+                  ),
+                  border: InputBorder.none,
+                ),
+                obscureText: true,
+                onSaved: (String? value) {
+                  _password = value;
+                },
+              ),
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            SimpleDialog(
+              title: const Text("Quer ser Vendedor?"),
+              children: <Widget>[
+                SimpleDialogOption(
+                  onPressed: () {
+                    _vendedor = 1;
+                  },
+                  child: const Text('Yes'),
+                ),
+                SimpleDialogOption(
+                  onPressed: () {
+                    _vendedor = 0;
+                  },
+                  child: const Text('No'),
+                ),
+              ],
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            // ---------------------- CONFIRM BUTTON
+            ElevatedButton(
+              child: const Text('Cadastrar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink[100],
+              ),
+              onPressed: () {
+                final form = _formKey.currentState;
+                if (form != null && form.validate()) {
+                  form.save();
+                  signUp(_nome, _email, _password, _vendedor, context,
+                      (dialogResult) {
+                    if (dialogResult) {
+                      // Dialog closed with OK button pressed
+                      // Perform any additional logic here
+                      Navigator.of(context).pop();
+                    }
+                  });
+                }
+              },
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            ElevatedButton(
+              child: const Text('Voltar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink[100],
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      ))),
     );
   }
 }
