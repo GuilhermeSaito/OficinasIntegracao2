@@ -7,6 +7,8 @@ name = "pypi"
 flask = "*"
 mysql-connector-python = "*"
 gunicorn = "*"
+requests = "*"
+sendgrid = "*"
 
 [dev-packages]
 
