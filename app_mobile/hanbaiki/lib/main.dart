@@ -565,7 +565,6 @@ class CadastroPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      // navigatorKey: navigatorKey,
       home: Scaffold(
           body: Container(
               child: Form(
