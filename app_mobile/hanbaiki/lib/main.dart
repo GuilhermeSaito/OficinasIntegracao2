@@ -166,6 +166,23 @@ Future<void> signUp(
   dialogCallback(true);
 }
 
+// ---------------------------------- FUNCAO PARA DAR REFRESH NA PROPRIA PAGINA ( -------- PRECISA TESTAR ESSA FUNCAO -------- )
+void reloadPage(BuildContext context) {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (BuildContext context) => MyCurrentClass()),
+  );
+
+  // Como chamar a funcao na classe
+//   ElevatedButton(
+//   onPressed: () {
+//     reloadPage(context);
+//   },
+//   child: Text('Reload'),
+// ),
+
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -362,7 +379,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // ----------------------- Pag Principal
-class MainPage extends StatelessWidget {
+class MainPage extends StatefulWidget {   // ----------------------- SE PARAR DE FUNCIONAR, EH POR CAUSA DESSA MUDANCA
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _openDrawer() {
@@ -706,3 +723,122 @@ class CadastroPage extends StatelessWidget {
     );
   }
 }
+
+
+
+// ------------------------------- Exemplo de como daria pra fazer o MainPage na visao do cliente
+
+// class MyContainerScreen extends StatefulWidget {
+//   @override
+//   _MyContainerScreenState createState() => _MyContainerScreenState();
+// }
+
+// class _MyContainerScreenState extends State<MyContainerScreen> {
+//   List<dynamic> jsonData = [];
+//   List<int> buttonPresses = [];
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     fetchData();
+//   }
+
+//   void fetchData() async {
+//     final data = await fetchJsonData();
+//     setState(() {
+//       jsonData = data;
+//       buttonPresses = List<int>.filled(data.length, 0);
+//     });
+//   }
+
+//   Future<List<dynamic>> fetchJsonData() async {
+//     final response = await http.get(Uri.parse('your_api_endpoint_here'));
+//     if (response.statusCode == 200) {
+//       final jsonData = json.decode(response.body);
+//       return jsonData;
+//     } else {
+//       throw Exception('Failed to fetch JSON data');
+//     }
+//   }
+
+//   void onButton1Pressed(int index) {
+//     setState(() {
+//       buttonPresses[index]++;
+//     });
+//     print('Button 1 pressed in container $index');
+//   }
+
+//   void onButton2Pressed(int index) {
+//     setState(() {
+//       buttonPresses[index]--;
+//     });
+//     print('Button 2 pressed in container $index');
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Dynamic Containers'),
+//       ),
+//       body: ListView.builder(
+//         itemCount: jsonData.length,
+//         itemBuilder: (context, index) {
+//           final item = jsonData[index];
+//           final buttonPress = buttonPresses[index];
+//           return Container(
+//             padding: EdgeInsets.all(16.0),
+//             margin: EdgeInsets.all(8.0),
+//             decoration: BoxDecoration(
+//               border: Border.all(color: Colors.grey),
+//               borderRadius: BorderRadius.circular(8.0),
+//             ),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   'Name: ${item['name']}',
+//                   style: TextStyle(fontSize: 18.0),
+//                 ),
+//                 SizedBox(height: 8.0),
+//                 Text(
+//                   'Quantity: ${item['quantity']}',
+//                   style: TextStyle(fontSize: 16.0),
+//                 ),
+//                 SizedBox(height: 16.0),
+//                 Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                   children: [
+//                     ElevatedButton(
+//                       onPressed: () {
+//                         onButton1Pressed(index);
+//                       },
+//                       child: Text('Button 1'),
+//                     ),
+//                     ElevatedButton(
+//                       onPressed: () {
+//                         onButton2Pressed(index);
+//                       },
+//                       child: Text('Button 2'),
+//                     ),
+//                   ],
+//                 ),
+//                 SizedBox(height: 8.0),
+//                 Text(
+//                   'Button Presses: $buttonPress',
+//                   style: TextStyle(fontSize: 16.0),
+//                 ),
+//               ],
+//             ),
+//           );
+//         },
+//       ),
+//     );
+//   }
+// }
+
+// void main() {
+//   runApp(MaterialApp(
+//     home: MyContainerScreen(),
+//   ));
+// }

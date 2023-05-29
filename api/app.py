@@ -34,6 +34,21 @@ def connect_db():
 
     return cnx
 
+def get_quadrate_disponivel(data):
+    list_disponivel = []
+
+    if not(1 in data):
+        list_disponivel.append(1)
+    if not(2 in data):
+        list_disponivel.append(2)
+    if not(3 in data):
+        list_disponivel.append(3)
+    if not(4 in data):
+        list_disponivel.append(4)
+
+    return list_disponivel
+
+
 app = Flask(__name__)
 
 @app.errorhandler(400)
@@ -55,31 +70,6 @@ def handle_exception(e):
     })
     response.content_type = "application/json"
     return response
-
-# # -------------- Retorna todos os produtos cadastrados na base
-# @app.route("/getDataProdutos")
-# def get_data():
-#     cnx = connect_db()
-    
-#     cursor = cnx.cursor(buffered = True)
-
-#     query = ("SELECT * FROM produtos")
-
-#     cursor.execute(query)
-    
-#     list_tuple = cursor.fetchall()
-
-#     list_dict = []
-#     for tuple in list_tuple:
-#         # Da para fazer assim no dic pq as colunas da tabela n mudam, mas se mudar vai ter q mudar aqui tbm
-#         dict = {
-#             "id": tuple[0],
-#             "nome": tuple[1],
-#             "quantidade": tuple[2]
-#         }
-#         list_dict.append(dict)
-    
-#     return json.dumps(list_dict, indent = 4)
 
 # -------------- Retorna todas as pessoas cadastradas na base
 @app.route("/getDataPessoa")
@@ -109,6 +99,95 @@ def get_data():
         list_dict.append(dict)
     
     return json.dumps(list_dict, indent = 4)
+
+# -------------- -------------------------------- PRECISA VERIFICAR ESSAS FUNCOES DAQUI
+# EndPoint para ver se pode entrar na tela do Vendedor, ou seja, primeiro o usuario precisa ser Vendedor = 1 e essa funcao deve retornar algo diferente de vazio
+@app.route("/canInsertProduct")
+def can_insert_product():
+    cnx = connect_db()
+    
+    cursor = cnx.cursor(buffered = True)
+
+    query = ("SELECT quadrante_produto FROM pessoas WHERE quadrante_produto <> 0")
+
+    cursor.execute(query)
+    
+    list_tuple = cursor.fetchall()
+
+    list_quadrante_disponivel = get_quadrate_disponivel(list_tuple)
+
+    list_dict = []
+    for quadrante in list_quadrante_disponivel:
+        dict = {
+            "quadrante": quadrante
+        }
+        list_dict.append(dict)
+
+    # Retorna todos os quadrantes em que estao disponiveis    
+    return json.dumps(list_dict, indent = 4)
+
+# EndPoint para a tela do Vendedor, para quando ele for adicionar mais produto E para a pagina do cliente, quando apertar o botao de comprar, vai retornar todos os dados iguais menos a quantidade do produto, que vai ser calculado no app e mandado pra ca
+@app.route("/updateProduct")
+def update_product():
+    email = request.args.get('email', '')
+    password = request.args.get('password', '')
+    nome_produto = request.args.get('nome_produto', '')
+    quantidade_produto = request.args.get('quantidade_produto', '')
+    quadrante_produto = request.args.get('quadrante_produto', '')
+
+    # Caso nao tenha nenhum produto, nao deve ocupar nenhum quadrante
+    if quantidade_produto == 0:
+        quadrante_produto = 0
+
+    cnx = connect_db()
+    
+    cursor = cnx.cursor(buffered = True)
+
+    query = ("UPDATE pessoas SET nome_produto = " + nome_produto + " quantidade_produto = " + quantidade_produto + " quadrante_produto = " + quadrante_produto + " WHERE email = " + email + " AND password = " + password + ";")
+
+    try:
+        cursor.execute(query)
+        
+        cnx.commit()
+
+        cnx.close()
+    except mysql.connector.Error as error:
+        return json.dumps({
+            "message: " : "Error in inserting data: ",
+            "error: " : error
+        })
+    
+    return json.dumps({
+        "message: " : "Successfully updated data"
+    })
+
+# EndPoint para fazer a tela do cliente, mostrando o nome do produto, a quantidade total, quantidade selecionada e os botoes de + ou -, o quadrante serve pra falar pro esp qual motor rodar e quantos quadradinhos devem ser mostrados
+@app.route("/getProdutosQuadrante")
+def get_produtos_quadrante():
+    cnx = connect_db()
+    
+    cursor = cnx.cursor(buffered = True)
+
+    query = ("SELECT nome, email, nome_produto, quantidade_produto, quadrante_produto FROM pessoas WHERE quadrante_produto <> 0")
+
+    cursor.execute(query)
+    
+    list_tuple = cursor.fetchall()
+
+    list_dict = []
+    for tuple in list_tuple:
+        dict = {
+            "nome": tuple[0],
+            "email": tuple[1],
+            "nome_produto": tuple[2],
+            "quantidade_produto": tuple[3],
+            "quadrante_produto": tuple[4]
+        }
+        list_dict.append(dict)
+    
+    return json.dumps(list_dict, indent = 4)
+
+# -------------- -------------------------------- ATEH AQUI
 
 @app.route("/insertDataPessoa")
 def insertDataPessoa():
@@ -153,8 +232,6 @@ def validate_login():
     cursor = cnx.cursor(buffered = True)
 
     query = ("SELECT * FROM pessoas WHERE email = '" + email + "' AND senha = '" + password + "'")
-
-    print(query)
 
     cursor.execute(query)
     
