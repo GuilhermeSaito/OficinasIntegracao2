@@ -84,6 +84,8 @@ def get_data():
     
     list_tuple = cursor.fetchall()
 
+    print(list_tuple)
+
     list_dict = []
     for tuple in list_tuple:
         # Da para fazer assim no dic pq as colunas da tabela n mudam, mas se mudar vai ter q mudar aqui tbm
@@ -94,13 +96,13 @@ def get_data():
             "senha": tuple[3],
             "vendedor": tuple[4],
             "nome_produto": tuple[5],
-            "quantidade_produto": tuple[6]
+            "quantidade_produto": tuple[6],
+            "quadrante": tuple[7]
         }
         list_dict.append(dict)
     
     return json.dumps(list_dict, indent = 4)
 
-# -------------- -------------------------------- PRECISA VERIFICAR ESSAS FUNCOES DAQUI
 # EndPoint para ver se pode entrar na tela do Vendedor, ou seja, primeiro o usuario precisa ser Vendedor = 1 e essa funcao deve retornar algo diferente de vazio
 @app.route("/canInsertProduct")
 def can_insert_product():
@@ -108,13 +110,17 @@ def can_insert_product():
     
     cursor = cnx.cursor(buffered = True)
 
-    query = ("SELECT quadrante_produto FROM pessoas WHERE quadrante_produto <> 0")
+    query = ("SELECT quadrante_produto FROM pessoas WHERE quadrante_produto = 1 OR quadrante_produto = 2 OR quadrante_produto = 3 OR quadrante_produto = 4;")
 
     cursor.execute(query)
     
     list_tuple = cursor.fetchall()
 
-    list_quadrante_disponivel = get_quadrate_disponivel(list_tuple)
+    list_quadrantes_ocupados = []
+    for tuple in list_tuple:
+        list_quadrantes_ocupados.append(tuple[0])
+
+    list_quadrante_disponivel = get_quadrate_disponivel(list_quadrantes_ocupados)
 
     list_dict = []
     for quadrante in list_quadrante_disponivel:
@@ -143,7 +149,8 @@ def update_product():
     
     cursor = cnx.cursor(buffered = True)
 
-    query = ("UPDATE pessoas SET nome_produto = " + nome_produto + " quantidade_produto = " + quantidade_produto + " quadrante_produto = " + quadrante_produto + " WHERE email = " + email + " AND password = " + password + ";")
+    query = ("UPDATE pessoas SET nome_produto = '" + nome_produto + "', quantidade_produto = " + quantidade_produto + ", quadrante_produto = " + quadrante_produto + " WHERE email = '" + email + "' AND senha = '" + password + "';")
+    print(query)
 
     try:
         cursor.execute(query)
@@ -154,7 +161,7 @@ def update_product():
     except mysql.connector.Error as error:
         return json.dumps({
             "message: " : "Error in inserting data: ",
-            "error: " : error
+            "error: " : str(error)
         })
     
     return json.dumps({
@@ -168,7 +175,7 @@ def get_produtos_quadrante():
     
     cursor = cnx.cursor(buffered = True)
 
-    query = ("SELECT nome, email, nome_produto, quantidade_produto, quadrante_produto FROM pessoas WHERE quadrante_produto <> 0")
+    query = ("SELECT nome, email, nome_produto, quantidade_produto, quadrante_produto FROM pessoas WHERE quadrante_produto <> 0 ORDER BY quadrante_produto ASC")
 
     cursor.execute(query)
     
@@ -186,8 +193,6 @@ def get_produtos_quadrante():
         list_dict.append(dict)
     
     return json.dumps(list_dict, indent = 4)
-
-# -------------- -------------------------------- ATEH AQUI
 
 @app.route("/insertDataPessoa")
 def insertDataPessoa():
@@ -213,7 +218,7 @@ def insertDataPessoa():
     except mysql.connector.Error as error:
         return json.dumps({
             "message: " : "Error in inserting data: ",
-            "error: " : error
+            "error: " : str(error)
         })
         
     
