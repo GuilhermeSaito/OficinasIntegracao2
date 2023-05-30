@@ -1,9 +1,38 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'dart:convert';
+
+// Conta como Vendedor
+// Teste
+// Teste
+
+// Conta como NAO Vendedor
+// no
+// no
 
 void main() {
   runApp(const MyApp());
+}
+
+// Variaveis globais para ficar mais facil o acesso dos dados
+class GlobalVariable {
+  static final GlobalVariable _instance = GlobalVariable._internal();
+
+  factory GlobalVariable() {
+    return _instance;
+  }
+
+  GlobalVariable._internal();
+
+  String? _email;
+  String? _password;
+  int? _vendedor;
+  int? _quadranteSelecionado;
+
+  List<int>? _quadrantes_disponiveis;
 }
 
 // ---------------------------------- FUNCAO PARA VALIDAR O LOGIN
@@ -39,6 +68,10 @@ Future<void> validateLoginApi(
         ),
       );
     } else {
+      Map<String, dynamic> data_json = responseData[0];
+
+      GlobalVariable()._vendedor = data_json['vendedor'] as int;
+
       Navigator.push(
         context,
         PageRouteBuilder(
@@ -66,6 +99,158 @@ Future<void> validateLoginApi(
       ),
     );
   }
+}
+
+// ---------------------------------- FUNCAO PARA PERMITIR OU NAO O CADASTRO DE ITENS
+Future<bool> canInsertProduct(BuildContext context) async {
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/canInsertProduct';
+
+  var uri = Uri.parse(apiUrl);
+
+  try {
+    var response = await http.get(uri);
+
+    var responseData = jsonDecode(response.body);
+
+    if (responseData == null || responseData.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Máquina cheia!'),
+          content: Text("Espere sua vez para colocar os seus doces meu amigo!"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      GlobalVariable()._quadrantes_disponiveis =
+          responseData.map<int>((map) => map['quadrante'] as int).toList();
+
+      return true;
+    }
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Erro na verificação dos quadrantes disponíveis'),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  return false;
+}
+
+// ---------------------------------- FUNCAO PARA CADASTRAR UM NOVO PRODUTO
+Future<void> cadastrarProduto(
+  String? nomeProduto,
+  String? quantidadeProduto,
+  int? quadranteProduto,
+  BuildContext context,
+  Function(bool) dialogCallback,
+) async {
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
+  var parameters = {
+    'email': GlobalVariable()._email,
+    'password': GlobalVariable()._password,
+    'nome_produto': nomeProduto,
+    'quantidade_produto': quantidadeProduto.toString(),
+    'quadrante_produto': quadranteProduto.toString(),
+  };
+
+  var uri = Uri.parse(apiUrl).replace(queryParameters: parameters);
+
+  final GlobalKey<State> _key = GlobalKey<State>();
+
+  try {
+    var response = await http.get(uri);
+
+    var responseData = jsonDecode(response.body);
+    if (responseData == null || responseData.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Erro no cadastro do produto'),
+          content: Text(
+              "Erro ao cadastrar o produto, retorno null da api, tente novamente mais tarde"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Cadastro Concluido com Sucesso!'),
+          content: Text(
+              "Seu produto foi cadastrado com sucesso, agora só espere um desavisado cair na sua armadilha de ganhar dinheir fácil!" +
+                  responseData.toString()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Erro no cadastro'),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(true); // Close the dialog
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Espera um pouco...'),
+      content: Text(''),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(true); // Close the dialog
+          },
+          child: Text('OK'),
+        ),
+      ],
+    ),
+  );
+
+  dialogCallback(true);
 }
 
 // ---------------------------------- FUNCAO PARA CADASTRAR NOVO ACESSO
@@ -170,7 +355,7 @@ Future<void> signUp(
 void reloadPage(BuildContext context) {
   Navigator.pushReplacement(
     context,
-    MaterialPageRoute(builder: (BuildContext context) => MyCurrentClass()),
+    MaterialPageRoute(builder: (BuildContext context) => MainPage()),
   );
 
   // Como chamar a funcao na classe
@@ -180,7 +365,6 @@ void reloadPage(BuildContext context) {
 //   },
 //   child: Text('Reload'),
 // ),
-
 }
 
 class MyApp extends StatelessWidget {
@@ -193,15 +377,6 @@ class MyApp extends StatelessWidget {
       title: 'Hanbaiki',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
       home: Scaffold(
@@ -227,8 +402,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
 
-  String? _email;
-  String? _password;
+  // String? _email;
+  // String? _password;
 
   @override
   Widget build(BuildContext context) {
@@ -298,7 +473,7 @@ class _LoginPageState extends State<LoginPage> {
                           // Da pra colocar uns frurus aqui
                         ),
                         onSaved: (String? value) {
-                          _email = value;
+                          GlobalVariable()._email = value;
                         },
                       ),
                     ),
@@ -323,7 +498,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         obscureText: true,
                         onSaved: (String? value) {
-                          _password = value;
+                          GlobalVariable()._password = value;
                         },
                       ),
                     ),
@@ -340,7 +515,8 @@ class _LoginPageState extends State<LoginPage> {
                         final form = _formKey.currentState;
                         if (form != null) {
                           form.save();
-                          validateLoginApi(_email, _password, context);
+                          validateLoginApi(GlobalVariable()._email,
+                              GlobalVariable()._password, context);
                         }
                       },
                     ),
@@ -378,8 +554,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+class MainPage extends StatefulWidget {
+  @override
+  _MainPage createState() => _MainPage();
+}
+
 // ----------------------- Pag Principal
-class MainPage extends StatefulWidget {   // ----------------------- SE PARAR DE FUNCIONAR, EH POR CAUSA DESSA MUDANCA
+class _MainPage extends State<MainPage> {
+  // ----------------------- SE PARAR DE FUNCIONAR, EH POR CAUSA DESSA MUDANCA
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _openDrawer() {
@@ -528,7 +710,42 @@ class MainPage extends StatefulWidget {   // ----------------------- SE PARAR DE
                 ),
               ),
               onTap: () {
-                // Handle option 2 press
+                canInsertProduct(context).then((canInsertProductResponse) {
+                  if (GlobalVariable()._vendedor == 1) {
+                    if (canInsertProductResponse == true) {
+                      print(GlobalVariable()._email);
+                      print(GlobalVariable()._password);
+
+                      // --------------- Transicao de tela para a tela de cadastro
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          transitionDuration: Duration(seconds: 1),
+                          pageBuilder: (_, __, ___) => VendedorPageCadastro(),
+                          transitionsBuilder: (_, animation, __, child) =>
+                              FadeTransition(opacity: animation, child: child),
+                        ),
+                      );
+                    }
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Você não é um vendedor!'),
+                        content: Text(
+                            'Cadastre uma conta como vendedor para acessar essa página!'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the dialog
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                });
               },
             ),
             // ------ Historico
@@ -696,6 +913,151 @@ class CadastroPage extends StatelessWidget {
                   form.save();
                   signUp(_nome, _email, _password, _vendedor, context,
                       (dialogResult) {
+                    if (dialogResult) {
+                      // Dialog closed with OK button pressed
+                      // Perform any additional logic here
+                      Navigator.of(context).pop();
+                    }
+                  });
+                }
+              },
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            ElevatedButton(
+              child: const Text('Voltar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink[100],
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      ))),
+    );
+  }
+}
+
+// ----------------------- Pag do Vendedor Cadastrar Item
+class VendedorPageCadastro extends StatelessWidget {
+  final _formKey = GlobalKey<FormState>();
+
+  // Nome, email, password, vendedor
+  String? _nomeProduto;
+  String? _quantidadeProduto;
+  String? _quadranteProduto;
+
+  // Variavel para atualizar o valor da tela, soh para ajudar
+  int? selectedValue = GlobalVariable()._quadrantes_disponiveis?[0];
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+          body: Container(
+              child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 20.0,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(45.0),
+                color: Colors.pink[100],
+              ),
+              width: MediaQuery.of(context).size.width * 2 / 3,
+              // ---------------------- EMAIL BOX
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'NOME DO PRODUTO',
+                  labelStyle: TextStyle(
+                    color: Colors.white, // set the color of the label to white
+                  ),
+                  border: InputBorder.none,
+                  // Da pra colocar uns frurus aqui
+                ),
+                onSaved: (String? value) {
+                  _nomeProduto = value;
+                },
+              ),
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(45.0),
+                color: Colors.pink[100],
+              ),
+              width: MediaQuery.of(context).size.width * 2 / 3,
+              // ---------------------- EMAIL BOX
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'QUANTIDADE DO PRODUTO',
+                  labelStyle: TextStyle(
+                    color: Colors.white, // set the color of the label to white
+                  ),
+                  border: InputBorder.none,
+                  // Da pra colocar uns frurus aqui
+                ),
+                onSaved: (String? value) {
+                  _quantidadeProduto = value;
+                },
+              ),
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20.0),
+                color: Colors.pink[100],
+              ),
+              width: MediaQuery.of(context).size.width * 2 / 3,
+              // ---------------------- PASSWORD BOX
+              child: DropdownButton<int>(
+                value: selectedValue,
+                onChanged: (int? newValue) {
+                  if (newValue != null) {
+                    selectedValue = newValue;
+                    GlobalVariable()._quadranteSelecionado = selectedValue;
+                  }
+                },
+                items: GlobalVariable()
+                    ._quadrantes_disponiveis
+                    ?.map<DropdownMenuItem<int>>((int value) {
+                  return DropdownMenuItem<int>(
+                    value: value,
+                    child: Text('Quadrante $value'),
+                  );
+                }).toList(),
+              ),
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            // ---------------------- CONFIRM BUTTON
+            ElevatedButton(
+              child: const Text('Cadastrar Produto'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink[100],
+              ),
+              onPressed: () {
+                final form = _formKey.currentState;
+                if (form != null && form.validate()) {
+                  form.save();
+                  cadastrarProduto(
+                      _nomeProduto,
+                      _quantidadeProduto,
+                      GlobalVariable()._quadranteSelecionado,
+                      context, (dialogResult) {
                     if (dialogResult) {
                       // Dialog closed with OK button pressed
                       // Perform any additional logic here
