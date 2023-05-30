@@ -131,39 +131,41 @@ def can_insert_product():
     return json.dumps(list_dict, indent = 4)
 
 # EndPoint para a tela do Vendedor, para quando ele for adicionar mais produto E para a pagina do cliente, quando apertar o botao de comprar, vai retornar todos os dados iguais menos a quantidade do produto, que vai ser calculado no app e mandado pra ca
-@app.route("/updateProduct")
+@app.route("/updateProduct", methods=['POST'])
 def update_product():
-    email = request.args.get('email', '')
-    password = request.args.get('password', '')
-    nome_produto = request.args.get('nome_produto', '')
-    quantidade_produto = request.args.get('quantidade_produto', 0)
-    quadrante_produto = request.args.get('quadrante_produto', 0)
+    data = request.get_json()
 
-    # Caso nao tenha nenhum produto, nao deve ocupar nenhum quadrante
-    if quantidade_produto == 0:
-        quadrante_produto = 0
+    if data is None:
+        return jsonify({'error': 'Invalid JSON data'})
+    
+    emails = data.get("email_app")
+    passwords = data.get("password_app")
+    nomesProduto = data.get("nome_produtos_app")
+    quantidadesProdutos = data.get("quantidade_produtos_app")
+    quadrantesProduto = data.get("quadrante_produtos_app")
 
     cnx = connect_db()
     
     cursor = cnx.cursor(buffered = True)
 
-    query = ("UPDATE pessoas SET nome_produto = '" + nome_produto + "', quantidade_produto = " + str(quantidade_produto) + ", quadrante_produto = " + str(quadrante_produto) + " WHERE email = '" + email + "' AND senha = '" + password + "';")
-    print(query)
+    for nome_produto, quantidade_produto, quadrante_produto, email, password in zip(nomesProduto, quantidadesProdutos, quadrantesProduto, emails, passwords):
+        # query = ("UPDATE pessoas SET nome_produto = '" + nome_produto + "', quantidade_produto = " + str(quantidade_produto) + ", quadrante_produto = " + str(quadrante_produto) + " WHERE email = '" + email + "' AND senha = '" + password + "';")
+        query = "UPDATE pessoas SET nome_produto = %s, quantidade_produto = %s, quadrante_produto = %s WHERE email = %s AND senha = %s"
+        values = (nome_produto, quantidade_produto, quadrante_produto, email, password)
+        try:
+            # cursor.execute(query)
+            cursor.execute(query, values)
+            
+        except mysql.connector.Error as error:
+            return json.dumps({
+                "message": "Error in updating data",
+                "error": str(error)
+            })
+    cnx.commit()
 
-    try:
-        cursor.execute(query)
-        
-        cnx.commit()
-
-        cnx.close()
-    except mysql.connector.Error as error:
-        return json.dumps({
-            "message: " : "Error in inserting data: ",
-            "error: " : str(error)
-        })
-    
+    cnx.close()
     return json.dumps({
-        "message: " : "Successfully updated data"
+        "message": "Successfully updated data"
     })
 
 # EndPoint para fazer a tela do cliente, mostrando o nome do produto, a quantidade total, quantidade selecionada e os botoes de + ou -, o quadrante serve pra falar pro esp qual motor rodar e quantos quadradinhos devem ser mostrados
@@ -173,7 +175,7 @@ def get_produtos_quadrante():
     
     cursor = cnx.cursor(buffered = True)
 
-    query = ("SELECT nome, email, nome_produto, quantidade_produto, quadrante_produto FROM pessoas WHERE quadrante_produto = 1 OR quadrante_produto = 2 OR quadrante_produto = 3 OR quadrante_produto = 4 ORDER BY quadrante_produto ASC")
+    query = ("SELECT nome, email, nome_produto, quantidade_produto, quadrante_produto, senha FROM pessoas WHERE quadrante_produto = 1 OR quadrante_produto = 2 OR quadrante_produto = 3 OR quadrante_produto = 4 ORDER BY quadrante_produto ASC")
 
     cursor.execute(query)
     
@@ -186,7 +188,8 @@ def get_produtos_quadrante():
             "email": tuple[1],
             "nome_produto": tuple[2],
             "quantidade_produto": tuple[3],
-            "quadrante_produto": tuple[4]
+            "quadrante_produto": tuple[4],
+            "password": tuple[5]
         }
         list_dict.append(dict)
     

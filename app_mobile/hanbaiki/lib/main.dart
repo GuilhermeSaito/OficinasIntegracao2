@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
@@ -37,6 +38,7 @@ class GlobalVariable {
   List<String>? nomesProduto;
   List<int>? quantidadesProdutos;
   List<int>? quadrantesProdutos;
+  List<String>? senhasCliente;
 
   List<int>? _quadrantes_disponiveis;
 }
@@ -149,12 +151,8 @@ Future<void> getProdutosQuadrante(BuildContext context) async {
       GlobalVariable().quadrantesProdutos = responseData
           .map<int>((map) => map['quadrante_produto'] as int)
           .toList();
-
-      print(GlobalVariable().nomesCliente);
-      print(GlobalVariable().emailsCliente);
-      print(GlobalVariable().nomesProduto);
-      print(GlobalVariable().quantidadesProdutos);
-      print(GlobalVariable().quadrantesProdutos);
+      GlobalVariable().senhasCliente =
+          responseData.map<String>((map) => map['password'] as String).toList();
     }
   } catch (e) {
     showDialog(
@@ -301,6 +299,93 @@ Future<bool> canInsertProduct(BuildContext context) async {
   return false;
 }
 
+Future<void> comprarProduto(
+    List<int> quantidadeProdutoComprado, BuildContext context) async {
+  List<int>? resultado_quantidade = List.generate(
+      GlobalVariable().quantidadesProdutos?.length ?? 0,
+      (index) =>
+          (GlobalVariable().quantidadesProdutos?[index] ?? 0) -
+          quantidadeProdutoComprado[index]);
+
+  // Atualiza o quadrante para 0 caso n tenha nenhum produto
+  for (int i = 0; i < resultado_quantidade.length; i++) {
+    if (resultado_quantidade[i] == 0) {
+      GlobalVariable().quadrantesProdutos?[i] = 0;
+    }
+  }
+
+  Map<String, dynamic> data = {
+    'email_app': GlobalVariable().emailsCliente,
+    'password_app': GlobalVariable().senhasCliente,
+    'nome_produtos_app': GlobalVariable().nomesProduto,
+    'quantidade_produtos_app': resultado_quantidade,
+    'quadrante_produtos_app': GlobalVariable().quadrantesProdutos
+  };
+
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
+
+  var uri = Uri.parse(apiUrl);
+
+  try {
+    var response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode == 200) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Parabéns, você conseguiu comprar um doce!'),
+          content: Text(
+              'Agora espere a máquina funcionar para você adquirir seu doce'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Ow no, tem um erro na API'),
+          content: Text(response.statusCode.toString() + response.body),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Aconteceu alguma coisa de ruim... Me avise!!'),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ---------------------------------- FUNCAO PARA CADASTRAR UM NOVO PRODUTO
 Future<void> cadastrarProduto(
   String? nomeProduto,
@@ -309,23 +394,34 @@ Future<void> cadastrarProduto(
   BuildContext context,
   Function(bool) dialogCallback,
 ) async {
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
-  var parameters = {
-    'email': GlobalVariable()._email,
-    'password': GlobalVariable()._password,
-    'nome_produto': nomeProduto,
-    'quantidade_produto': quantidadeProduto.toString(),
-    'quadrante_produto': quadranteProduto.toString(),
+  // Atualiza o quadrante para 0 caso n tenha nenhum produto
+  if (quantidadeProduto == '0') {
+    quadranteProduto = 0;
+  }
+
+  Map<String, dynamic> data = {
+    'email_app': GlobalVariable()._email,
+    'password_app': GlobalVariable()._password,
+    'nome_produtos_app': nomeProduto,
+    'quantidade_produtos_app': quantidadeProduto,
+    'quadrante_produtos_app': quadranteProduto
   };
 
-  var uri = Uri.parse(apiUrl).replace(queryParameters: parameters);
+  print(data);
 
-  final GlobalKey<State> _key = GlobalKey<State>();
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
+
+  var uri = Uri.parse(apiUrl);
 
   try {
-    var response = await http.get(uri);
+    var response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
 
     var responseData = jsonDecode(response.body);
+    print(responseData);
     if (responseData == null || responseData.isEmpty) {
       showDialog(
         context: context,
@@ -498,19 +594,13 @@ Future<void> signUp(
 }
 
 // ---------------------------------- FUNCAO PARA DAR REFRESH NA PROPRIA PAGINA ( -------- PRECISA TESTAR ESSA FUNCAO -------- )
-void reloadPage(BuildContext context) {
+void reloadPage(BuildContext context) async {
+  await getProdutosQuadrante(context);
+
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(builder: (BuildContext context) => MainPage()),
   );
-
-  // Como chamar a funcao na classe
-//   ElevatedButton(
-//   onPressed: () {
-//     reloadPage(context);
-//   },
-//   child: Text('Reload'),
-// ),
 }
 
 class MyApp extends StatelessWidget {
@@ -750,296 +840,295 @@ class _MainPage extends State<MainPage> {
       });
     }
   }
-  // void Testar() {
-  //   print(GlobalVariable().nomesCliente?.length);
-  //   print(GlobalVariable().nomesProduto);
-  //   print(GlobalVariable().quantidadesProdutos);
-  // }
 
   @override
   Widget build(BuildContext context) {
-    // return FutureBuilder(
-    //   future: getProdutosQuadrante(context),
-    //   builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-    //     if (snapshot.connectionState == ConnectionState.waiting) {
-    //       return CircularProgressIndicator();
-    //     } else if (snapshot.hasError) {
-    //       // Handle any errors that occurred during the API call
-    //       return Text('Error: ${snapshot.error}');
-    //     } else {
-
-    // Testar();
     return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: Text('Main Page'),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              child: Text(
-                'Menu',
-                style: TextStyle(fontSize: 24, color: Colors.white),
-              ),
-            ),
-            // Linha horizontal para separar o header com as opcoes
-            Container(
-              height: 1,
-              color: Colors.grey,
-              margin: EdgeInsets.symmetric(horizontal: 16),
-            ),
-            // 1 topico
-            const ListTile(
-              title: Text(
-                'Information',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontSize: 18,
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: Text('Main Page'),
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(color: Colors.blue),
+                child: Text(
+                  'Menu',
+                  style: TextStyle(fontSize: 24, color: Colors.white),
                 ),
               ),
-            ),
-            // ------ Editar o perfil
-            ListTile(
-              leading: Icon(Icons.edit),
-              title: Text(
-                'Edit Profile',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black54,
+              // Linha horizontal para separar o header com as opcoes
+              Container(
+                height: 1,
+                color: Colors.grey,
+                margin: EdgeInsets.symmetric(horizontal: 16),
+              ),
+              // 1 topico
+              const ListTile(
+                title: Text(
+                  'Information',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: 18,
+                  ),
                 ),
               ),
-              onTap: () {
-                // Handle option 1 press
-              },
-            ),
-            // ------ Username
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text(
-                'Username',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black54,
+              // ------ Editar o perfil
+              ListTile(
+                leading: Icon(Icons.edit),
+                title: Text(
+                  'Edit Profile',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                ),
+                onTap: () {
+                  // Handle option 1 press
+                },
+              ),
+              // ------ Username
+              ListTile(
+                leading: Icon(Icons.person),
+                title: Text(
+                  'Username',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                ),
+                onTap: () {
+                  // Handle option 2 press
+                },
+              ),
+              // ------ Email
+              ListTile(
+                leading: Icon(Icons.email), // Add the email icon here
+                title: Text(
+                  'E-mail',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                ),
+                onTap: () {
+                  // Handle option 3 press
+                },
+              ),
+              // ------ Senha
+              ListTile(
+                leading: Icon(Icons.lock),
+                title: Text(
+                  'Password',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                ),
+                onTap: () {
+                  // Handle option 3 press
+                },
+              ),
+              // Linha horizontal para separar o header com as opcoes
+              Container(
+                height: 1,
+                color: Colors.grey,
+                margin: EdgeInsets.symmetric(horizontal: 16),
+              ),
+              // 2 topico
+              const ListTile(
+                title: Text(
+                  'Menu',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: 18,
+                  ),
                 ),
               ),
-              onTap: () {
-                // Handle option 2 press
-              },
-            ),
-            // ------ Email
-            ListTile(
-              leading: Icon(Icons.email), // Add the email icon here
-              title: Text(
-                'E-mail',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black54,
+              // ------ Produtos
+              ListTile(
+                leading: Icon(Icons.block),
+                title: Text(
+                  'Produtos',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
                 ),
+                onTap: () {
+                  // Handle option 1 press
+                },
               ),
-              onTap: () {
-                // Handle option 3 press
-              },
-            ),
-            // ------ Senha
-            ListTile(
-              leading: Icon(Icons.lock),
-              title: Text(
-                'Password',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black54,
+              // ------ Vendedores
+              ListTile(
+                leading: Icon(Icons.person_2),
+                title: Text(
+                  'Vendedores',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
                 ),
-              ),
-              onTap: () {
-                // Handle option 3 press
-              },
-            ),
-            // Linha horizontal para separar o header com as opcoes
-            Container(
-              height: 1,
-              color: Colors.grey,
-              margin: EdgeInsets.symmetric(horizontal: 16),
-            ),
-            // 2 topico
-            const ListTile(
-              title: Text(
-                'Menu',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-            // ------ Produtos
-            ListTile(
-              leading: Icon(Icons.block),
-              title: Text(
-                'Produtos',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
-              ),
-              onTap: () {
-                // Handle option 1 press
-              },
-            ),
-            // ------ Vendedores
-            ListTile(
-              leading: Icon(Icons.person_2),
-              title: Text(
-                'Vendedores',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
-              ),
-              onTap: () {
-                canInsertProduct(context).then((canInsertProductResponse) {
-                  if (GlobalVariable()._vendedor == 1) {
-                    if (canInsertProductResponse == true) {
-                      print(GlobalVariable()._email);
-                      print(GlobalVariable()._password);
+                onTap: () {
+                  canInsertProduct(context).then((canInsertProductResponse) {
+                    if (GlobalVariable()._vendedor == 1) {
+                      if (canInsertProductResponse == true) {
+                        print(GlobalVariable()._email);
+                        print(GlobalVariable()._password);
 
-                      // --------------- Transicao de tela para a tela de cadastro
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          transitionDuration: Duration(seconds: 1),
-                          pageBuilder: (_, __, ___) => VendedorPageCadastro(),
-                          transitionsBuilder: (_, animation, __, child) =>
-                              FadeTransition(opacity: animation, child: child),
+                        // --------------- Transicao de tela para a tela de cadastro
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            transitionDuration: Duration(seconds: 1),
+                            pageBuilder: (_, __, ___) => VendedorPageCadastro(),
+                            transitionsBuilder: (_, animation, __, child) =>
+                                FadeTransition(
+                                    opacity: animation, child: child),
+                          ),
+                        );
+                      }
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text('Você não é um vendedor!'),
+                          content: Text(
+                              'Cadastre uma conta como vendedor para acessar essa página!'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close the dialog
+                              },
+                              child: Text('OK'),
+                            ),
+                          ],
                         ),
                       );
                     }
-                  } else {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Você não é um vendedor!'),
-                        content: Text(
-                            'Cadastre uma conta como vendedor para acessar essa página!'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop(); // Close the dialog
-                            },
-                            child: Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                });
-              },
-            ),
-            // ------ Historico
-            ListTile(
-              leading: Icon(Icons.history), // Add the email icon here
-              title: Text(
-                'Historico',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
+                  });
+                },
               ),
-              onTap: () {
-                // Handle option 3 press
-              },
-            ),
-            // ------ Carrinho
-            ListTile(
-              leading: Icon(Icons.shopping_basket),
-              title: Text(
-                'Carrinho',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black54,
+              // ------ Historico
+              ListTile(
+                leading: Icon(Icons.history), // Add the email icon here
+                title: Text(
+                  'Historico',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
                 ),
+                onTap: () {
+                  // Handle option 3 press
+                },
               ),
-              onTap: () {
-                // Handle option 3 press
+              // ------ Carrinho
+              ListTile(
+                leading: Icon(Icons.shopping_basket),
+                title: Text(
+                  'Carrinho',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                ),
+                onTap: () {
+                  // Handle option 3 press
+                },
+              ),
+            ],
+          ),
+        ),
+        // --------------- Termino dos icones da barra
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: GlobalVariable().nomesCliente?.length,
+                itemBuilder: (context, index) {
+                  final buttonPress = buttonPresses[index];
+                  // final teste_index = index;
+                  return Container(
+                    padding: EdgeInsets.all(16.0),
+                    margin: EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    // child: Column(children: [
+                    // Text(buttonPress.toString()),
+                    // Text(GlobalVariable().nomesProduto?[index].toString() ??
+                    //     'Nada...'),
+                    // Text(GlobalVariable()
+                    //         .quantidadesProdutos?[index]
+                    //         .toString() ??
+                    //     'Nada...'),
+                    // ]),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Name: ${GlobalVariable().nomesProduto?[index].toString()}',
+                          style: TextStyle(fontSize: 18.0),
+                        ),
+                        SizedBox(height: 8.0),
+                        Text(
+                          'Quantity: ${GlobalVariable().quantidadesProdutos?[index].toString()}',
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                        SizedBox(height: 16.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                onButton1Pressed(index);
+                              },
+                              child: Text('+'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                onButton2Pressed(index);
+                              },
+                              child: Text('-'),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.0),
+                        Text(
+                          'Button Presses: $buttonPress',
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                        SizedBox(height: 8.0),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await comprarProduto(buttonPresses, context);
+                // --------------------------------------------------------------- AQUI Q VAI CHAMAR O ESP
+                reloadPage(context);
               },
+              child: Text('COMPRAR'),
             ),
           ],
-        ),
-      ),
-      // --------------- Termino dos icones da barra
-      body: ListView.builder(
-        itemCount: GlobalVariable().nomesCliente?.length,
-        itemBuilder: (context, index) {
-          final buttonPress = buttonPresses[index];
-          // final teste_index = index;
-          return Container(
-            padding: EdgeInsets.all(16.0),
-            margin: EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            // child: Column(children: [
-            // Text(buttonPress.toString()),
-            // Text(GlobalVariable().nomesProduto?[index].toString() ??
-            //     'Nada...'),
-            // Text(GlobalVariable()
-            //         .quantidadesProdutos?[index]
-            //         .toString() ??
-            //     'Nada...'),
-            // ]),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Name: ${GlobalVariable().nomesProduto?[index].toString()}',
-                  style: TextStyle(fontSize: 18.0),
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  'Quantity: ${GlobalVariable().quantidadesProdutos?[index].toString()}',
-                  style: TextStyle(fontSize: 16.0),
-                ),
-                SizedBox(height: 16.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        onButton1Pressed(index);
-                      },
-                      child: Text('+'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        onButton2Pressed(index);
-                      },
-                      child: Text('-'),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  'Button Presses: $buttonPress',
-                  style: TextStyle(fontSize: 16.0),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+        ));
     // }
   }
   // );
@@ -1287,7 +1376,6 @@ class VendedorPageCadastro extends StatelessWidget {
                 color: Colors.pink[100],
               ),
               width: MediaQuery.of(context).size.width * 2 / 3,
-              // ---------------------- PASSWORD BOX
               child: DropdownButton<int>(
                 value: selectedValue,
                 onChanged: (int? newValue) {
