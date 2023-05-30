@@ -32,6 +32,12 @@ class GlobalVariable {
   int? _vendedor;
   int? _quadranteSelecionado;
 
+  List<String>? nomesCliente;
+  List<String>? emailsCliente;
+  List<String>? nomesProduto;
+  List<int>? quantidadesProdutos;
+  List<int>? quadrantesProdutos;
+
   List<int>? _quadrantes_disponiveis;
 }
 
@@ -87,6 +93,74 @@ Future<void> validateLoginApi(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Erro na validação do login'),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Funcao para mostrar todos os produtos na pagina do cliente
+Future<void> getProdutosQuadrante(BuildContext context) async {
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/getProdutosQuadrante';
+
+  var uri = Uri.parse(apiUrl);
+
+  try {
+    var response = await http.get(uri);
+
+    var responseData = jsonDecode(response.body);
+
+    if (responseData == null) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Problema na hora de mostrar os produtos disponiveis!'),
+          content: Text(
+              "Alguma coisa está errada meu amigo... Me contate o mais rápido possível"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      GlobalVariable().nomesCliente =
+          responseData.map<String>((map) => map['nome'] as String).toList();
+      GlobalVariable().emailsCliente =
+          responseData.map<String>((map) => map['email'] as String).toList();
+      GlobalVariable().nomesProduto = responseData
+          .map<String>((map) => map['nome_produto'] as String)
+          .toList();
+      GlobalVariable().quantidadesProdutos = responseData
+          .map<int>((map) => map['quantidade_produto'] as int)
+          .toList();
+      GlobalVariable().quadrantesProdutos = responseData
+          .map<int>((map) => map['quadrante_produto'] as int)
+          .toList();
+
+      print(GlobalVariable().nomesCliente);
+      print(GlobalVariable().emailsCliente);
+      print(GlobalVariable().nomesProduto);
+      print(GlobalVariable().quantidadesProdutos);
+      print(GlobalVariable().quadrantesProdutos);
+    }
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Erro na aquisição dos dados dos produtos dos quadrantes'),
         content: Text(e.toString()),
         actions: [
           TextButton(
@@ -589,6 +663,21 @@ class _LoginPageState extends State<LoginPage> {
                           form.save();
                           validateLoginApi(GlobalVariable()._email,
                               GlobalVariable()._password, context);
+
+                          FutureBuilder(
+                              future: getProdutosQuadrante(context),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot<void> snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return CircularProgressIndicator();
+                                } else if (snapshot.hasError) {
+                                  // Handle any errors that occurred during the API call
+                                  return Text('Error: ${snapshot.error}');
+                                } else {
+                                  return Text('');
+                                }
+                              });
                         }
                       },
                     ),
@@ -638,19 +727,52 @@ class _MainPage extends State<MainPage> {
   // ----------------------- SE PARAR DE FUNCIONAR, EH POR CAUSA DESSA MUDANCA
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  List<int> buttonPresses =
+      List<int>.filled(GlobalVariable().quadrantesProdutos?.length ?? 0, 0);
+
   void _openDrawer() {
     _scaffoldKey.currentState?.openDrawer();
   }
 
+  void onButton1Pressed(int index) {
+    if ((buttonPresses[index]) <
+        (GlobalVariable().quantidadesProdutos?[index] ?? 0)) {
+      setState(() {
+        buttonPresses[index]++;
+      });
+    }
+  }
+
+  void onButton2Pressed(int index) {
+    if (buttonPresses[index] > 0) {
+      setState(() {
+        buttonPresses[index]--;
+      });
+    }
+  }
+  // void Testar() {
+  //   print(GlobalVariable().nomesCliente?.length);
+  //   print(GlobalVariable().nomesProduto);
+  //   print(GlobalVariable().quantidadesProdutos);
+  // }
+
   @override
   Widget build(BuildContext context) {
+    // return FutureBuilder(
+    //   future: getProdutosQuadrante(context),
+    //   builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+    //     if (snapshot.connectionState == ConnectionState.waiting) {
+    //       return CircularProgressIndicator();
+    //     } else if (snapshot.hasError) {
+    //       // Handle any errors that occurred during the API call
+    //       return Text('Error: ${snapshot.error}');
+    //     } else {
+
+    // Testar();
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
         title: Text('Main Page'),
-      ),
-      body: Center(
-        child: Text('Main Page Content'),
       ),
       drawer: Drawer(
         child: ListView(
@@ -855,8 +977,73 @@ class _MainPage extends State<MainPage> {
           ],
         ),
       ),
+      // --------------- Termino dos icones da barra
+      body: ListView.builder(
+        itemCount: GlobalVariable().nomesCliente?.length,
+        itemBuilder: (context, index) {
+          final buttonPress = buttonPresses[index];
+          // final teste_index = index;
+          return Container(
+            padding: EdgeInsets.all(16.0),
+            margin: EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            // child: Column(children: [
+            // Text(buttonPress.toString()),
+            // Text(GlobalVariable().nomesProduto?[index].toString() ??
+            //     'Nada...'),
+            // Text(GlobalVariable()
+            //         .quantidadesProdutos?[index]
+            //         .toString() ??
+            //     'Nada...'),
+            // ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Name: ${GlobalVariable().nomesProduto?[index].toString()}',
+                  style: TextStyle(fontSize: 18.0),
+                ),
+                SizedBox(height: 8.0),
+                Text(
+                  'Quantity: ${GlobalVariable().quantidadesProdutos?[index].toString()}',
+                  style: TextStyle(fontSize: 16.0),
+                ),
+                SizedBox(height: 16.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        onButton1Pressed(index);
+                      },
+                      child: Text('+'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        onButton2Pressed(index);
+                      },
+                      child: Text('-'),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.0),
+                Text(
+                  'Button Presses: $buttonPress',
+                  style: TextStyle(fontSize: 16.0),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
+    // }
   }
+  // );
+  // }
 }
 
 // ----------------------- Pag de cadastro
@@ -1164,122 +1351,3 @@ class VendedorPageCadastro extends StatelessWidget {
     );
   }
 }
-
-
-
-// ------------------------------- Exemplo de como daria pra fazer o MainPage na visao do cliente
-
-// class MyContainerScreen extends StatefulWidget {
-//   @override
-//   _MyContainerScreenState createState() => _MyContainerScreenState();
-// }
-
-// class _MyContainerScreenState extends State<MyContainerScreen> {
-//   List<dynamic> jsonData = [];
-//   List<int> buttonPresses = [];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     fetchData();
-//   }
-
-//   void fetchData() async {
-//     final data = await fetchJsonData();
-//     setState(() {
-//       jsonData = data;
-//       buttonPresses = List<int>.filled(data.length, 0);
-//     });
-//   }
-
-//   Future<List<dynamic>> fetchJsonData() async {
-//     final response = await http.get(Uri.parse('your_api_endpoint_here'));
-//     if (response.statusCode == 200) {
-//       final jsonData = json.decode(response.body);
-//       return jsonData;
-//     } else {
-//       throw Exception('Failed to fetch JSON data');
-//     }
-//   }
-
-//   void onButton1Pressed(int index) {
-//     setState(() {
-//       buttonPresses[index]++;
-//     });
-//     print('Button 1 pressed in container $index');
-//   }
-
-//   void onButton2Pressed(int index) {
-//     setState(() {
-//       buttonPresses[index]--;
-//     });
-//     print('Button 2 pressed in container $index');
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Dynamic Containers'),
-//       ),
-//       body: ListView.builder(
-//         itemCount: jsonData.length,
-//         itemBuilder: (context, index) {
-//           final item = jsonData[index];
-//           final buttonPress = buttonPresses[index];
-//           return Container(
-//             padding: EdgeInsets.all(16.0),
-//             margin: EdgeInsets.all(8.0),
-//             decoration: BoxDecoration(
-//               border: Border.all(color: Colors.grey),
-//               borderRadius: BorderRadius.circular(8.0),
-//             ),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   'Name: ${item['name']}',
-//                   style: TextStyle(fontSize: 18.0),
-//                 ),
-//                 SizedBox(height: 8.0),
-//                 Text(
-//                   'Quantity: ${item['quantity']}',
-//                   style: TextStyle(fontSize: 16.0),
-//                 ),
-//                 SizedBox(height: 16.0),
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                   children: [
-//                     ElevatedButton(
-//                       onPressed: () {
-//                         onButton1Pressed(index);
-//                       },
-//                       child: Text('Button 1'),
-//                     ),
-//                     ElevatedButton(
-//                       onPressed: () {
-//                         onButton2Pressed(index);
-//                       },
-//                       child: Text('Button 2'),
-//                     ),
-//                   ],
-//                 ),
-//                 SizedBox(height: 8.0),
-//                 Text(
-//                   'Button Presses: $buttonPress',
-//                   style: TextStyle(fontSize: 16.0),
-//                 ),
-//               ],
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
-
-// void main() {
-//   runApp(MaterialApp(
-//     home: MyContainerScreen(),
-//   ));
-// }
