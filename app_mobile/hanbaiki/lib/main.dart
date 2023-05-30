@@ -112,12 +112,13 @@ Future<bool> canInsertProduct(BuildContext context) async {
 
     var responseData = jsonDecode(response.body);
 
-    if (responseData == null || responseData.isEmpty) {
+    if (responseData == null) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Máquina cheia!'),
-          content: Text("Espere sua vez para colocar os seus doces meu amigo!"),
+          title: Text('Máquina zuada!'),
+          content: Text(
+              "Alguma coisa está errada meu amigo... Me contate o mais rápido possível"),
           actions: [
             TextButton(
               onPressed: () {
@@ -129,8 +130,79 @@ Future<bool> canInsertProduct(BuildContext context) async {
         ),
       );
     } else {
-      GlobalVariable()._quadrantes_disponiveis =
+      // GlobalVariable()._quadrantes_disponiveis =
+      //     responseData.map<int>((map) => map['quadrante'] as int).toList();
+
+      List<int> quadrantes_ocupados =
           responseData.map<int>((map) => map['quadrante'] as int).toList();
+      List<String?>? email_ocupando =
+          responseData.map<String>((map) => map['email'] as String).toList();
+      List<String?>? password_ocupando =
+          responseData.map<String>((map) => map['password'] as String).toList();
+
+      bool emailThere =
+          email_ocupando?.contains(GlobalVariable()._email) ?? false;
+      bool passwordThere =
+          password_ocupando?.contains(GlobalVariable()._password) ?? false;
+
+      if (emailThere == true && passwordThere) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Você não pode colocar seus doces!!'),
+            content: Text(
+                'Calma lá amigão, não seja ganancioso, ainda tem doces seus na máquina!'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+
+        return false;
+      }
+
+      if (quadrantes_ocupados.length >= 4) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Infelizmente a máquina está cheia'),
+            content: Text(
+                'Aguarde algum coleguinha conseguir vender todos os doces para liberar a máquina'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+
+        return false;
+      }
+
+      List<int> quadrantesDisponiveis = [];
+
+      if (!quadrantes_ocupados.contains(1)) {
+        quadrantesDisponiveis.add(1);
+      }
+      if (!quadrantes_ocupados.contains(2)) {
+        quadrantesDisponiveis.add(2);
+      }
+      if (!quadrantes_ocupados.contains(3)) {
+        quadrantesDisponiveis.add(3);
+      }
+      if (!quadrantes_ocupados.contains(4)) {
+        quadrantesDisponiveis.add(4);
+      }
+
+      GlobalVariable()._quadrantes_disponiveis = quadrantesDisponiveis;
 
       return true;
     }
