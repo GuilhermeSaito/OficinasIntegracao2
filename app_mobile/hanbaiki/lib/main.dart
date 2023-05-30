@@ -592,6 +592,8 @@ class _LoginPageState extends State<LoginPage> {
                         }
                       },
                     ),
+                    Text(
+                        '(Paciência é uma virtude, após apertar o botão, espere alguns segundos até acontecer alguma coisa no app)'),
                     SizedBox(height: 20),
                     TextButton(
                       onPressed: () {
@@ -994,6 +996,11 @@ class CadastroPage extends StatelessWidget {
                 }
               },
             ),
+            SizedBox(
+              height: 20.0,
+            ),
+            Text(
+                '(Paciência é uma virtude, após apertar em algum dos botões, espere alguns segundos até acontecer alguma coisa no app)'),
             SizedBox(
               height: 20.0,
             ),
