@@ -1296,14 +1296,19 @@ class CadastroPage extends StatelessWidget {
   }
 }
 
+class VendedorPageCadastro extends StatefulWidget {
+  @override
+  _VendedorPageCadastroState createState() => _VendedorPageCadastroState();
+}
+
 // ----------------------- Pag do Vendedor Cadastrar Item
-class VendedorPageCadastro extends StatelessWidget {
+class _VendedorPageCadastroState extends State<VendedorPageCadastro> {
   final _formKey = GlobalKey<FormState>();
 
   // Nome, email, password, vendedor
   String? _nomeProduto;
   String? _quantidadeProduto;
-  String? _quadranteProduto;
+  int? _quadranteProduto;
 
   // Variavel para atualizar o valor da tela, soh para ajudar
   int? selectedValue = GlobalVariable()._quadrantes_disponiveis?[0];
@@ -1380,8 +1385,10 @@ class VendedorPageCadastro extends StatelessWidget {
                 value: selectedValue,
                 onChanged: (int? newValue) {
                   if (newValue != null) {
-                    selectedValue = newValue;
-                    GlobalVariable()._quadranteSelecionado = selectedValue;
+                    setState(() {
+                      selectedValue = newValue;
+                      GlobalVariable()._quadranteSelecionado = selectedValue;
+                    });
                   }
                 },
                 items: GlobalVariable()
