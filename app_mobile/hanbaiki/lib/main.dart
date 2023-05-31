@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
 
+// ---------------------- PRECISA MUDAR DO LOCALHOST PARA O SERVIDOR!!!!
+
 // Conta como Vendedor
 // Teste
 // Teste
@@ -592,6 +594,228 @@ Future<void> signUp(
   dialogCallback(true);
 }
 
+Future<void> sendMailParaCliente(
+    List<int> quantidadeProduto, BuildContext context) async {
+  var apiUrl = 'http://127.0.0.1:5000/sendEmail';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/sendEmail';
+
+  String title = 'Compra efetuada por ${GlobalVariable()._email}';
+  String content = 'Produtos comprados: ';
+
+  List<int>? resultado_quantidade = List.generate(
+      GlobalVariable().quantidadesProdutos?.length ?? 0,
+      (index) =>
+          (GlobalVariable().quantidadesProdutos?[index] ?? 0) -
+          quantidadeProduto[index]);
+
+  // Coloca todos os produtos comprados
+  for (int i = 0; i < resultado_quantidade.length; i++) {
+    if (resultado_quantidade[i] != GlobalVariable().quantidadesProdutos?[i]) {
+      content += GlobalVariable().nomesProduto?[i] ?? '' + ' ';
+    }
+  }
+  content += ' Com suas respectivas quantidades: ';
+
+  for (int i = 0; i < resultado_quantidade.length; i++) {
+    if (resultado_quantidade[i] != GlobalVariable().quantidadesProdutos?[i]) {
+      content += quantidadeProduto[i].toString() + ' ';
+    }
+  }
+
+  var parameters = {
+    'email': GlobalVariable()._email,
+    'title': title,
+    'content': content
+  };
+
+  var uri = Uri.parse(apiUrl).replace(queryParameters: parameters);
+
+  try {
+    var response = await http.get(uri);
+
+    var responseData = jsonDecode(response.body);
+    if (responseData == null || responseData.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Erro ao mandar o email'),
+          content: Text(
+              "Deu um erro na hora de mandar o email, é possível que o email não seja válido"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      print("Seu email foi mandado com sucesso! Viva o SPAM!!! " +
+          responseData.toString());
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Email mandado com sucesso!'),
+          content: Text("Seu email foi mandado com sucesso! Viva o SPAM!!! " +
+              responseData.toString()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Deu algum probleminha na hora de mandar o email'),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Espera um pouco...'),
+      content: Text(''),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the dialog
+          },
+          child: Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+
+// Future<void> sendMail(List<int> quantidadeProduto, BuildContext context) async {
+//   var apiUrl = 'http://127.0.0.1:5000/sendEmail';
+//   // var apiUrl = 'https://hanbaiki-api.herokuapp.com/sendEmail';
+
+//   String title = 'Compra efetuada por ${GlobalVariable()._email}';
+
+//   List<int>? resultado_quantidade = List.generate(
+//       GlobalVariable().quantidadesProdutos?.length ?? 0,
+//       (index) =>
+//           (GlobalVariable().quantidadesProdutos?[index] ?? 0) -
+//           quantidadeProduto[index]);
+
+//   List<int> index = [];
+
+//   // Verifica todos os indices indicando quais produtos foram comprados
+//   for (int i = 0; i < resultado_quantidade.length; i++) {
+//     if (resultado_quantidade[i] != GlobalVariable().quantidadesProdutos?[i]) {
+//       index.add(i);
+//     }
+//   }
+
+//   for (int i = 0; i < index.length; i++) {
+//     String content = 'Produtos comprados: ';
+
+//     content +=
+//   }
+
+//   var parameters = {'email': email, 'title': title, 'content': content};
+
+//   var uri = Uri.parse(apiUrl).replace(queryParameters: parameters);
+
+//   final GlobalKey<State> _key = GlobalKey<State>();
+
+//   try {
+//     var response = await http.get(uri);
+
+//     var responseData = jsonDecode(response.body);
+//     if (responseData == null || responseData.isEmpty) {
+//       showDialog(
+//         context: context,
+//         builder: (context) => AlertDialog(
+//           title: Text('Erro no cadastro'),
+//           content:
+//               Text("Erro ao cadastrar o novo usuario, retorno null da api"),
+//           actions: [
+//             TextButton(
+//               onPressed: () {
+//                 Navigator.of(context).pop(true); // Close the dialog
+//               },
+//               child: Text('OK'),
+//             ),
+//           ],
+//         ),
+//       );
+//     } else {
+//       showDialog(
+//         context: context,
+//         builder: (context) => AlertDialog(
+//           title: Text('Cadastro Concluido com Sucesso!'),
+//           content: Text(
+//               "Seu cadastro foi concluido com sucesso, agora podera seguir na aplicacao com o email e a senha informados, utilize o botao voltar para seguir na pagina de login." +
+//                   responseData.toString()),
+//           actions: [
+//             TextButton(
+//               onPressed: () {
+//                 Navigator.of(context).pop(true); // Close the dialog
+//               },
+//               child: Text('OK'),
+//             ),
+//           ],
+//         ),
+//       );
+//     }
+//   } catch (e) {
+//     showDialog(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         title: Text('Erro no cadastro'),
+//         content: Text(e.toString()),
+//         actions: [
+//           TextButton(
+//             onPressed: () {
+//               Navigator.of(context).pop(true); // Close the dialog
+//             },
+//             child: Text('OK'),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   showDialog(
+//     context: context,
+//     builder: (context) => AlertDialog(
+//       title: Text('Espera um pouco...'),
+//       content: Text(''),
+//       actions: [
+//         TextButton(
+//           onPressed: () {
+//             Navigator.of(context).pop(true); // Close the dialog
+//           },
+//           child: Text('OK'),
+//         ),
+//       ],
+//     ),
+//   );
+
+//   dialogCallback(true);
+// }
+
 // ---------------------------------- FUNCAO PARA DAR REFRESH NA PROPRIA PAGINA ( -------- PRECISA TESTAR ESSA FUNCAO -------- )
 void reloadPage(BuildContext context) async {
   await getProdutosQuadrante(context);
@@ -1067,15 +1291,6 @@ class _MainPage extends State<MainPage> {
                       border: Border.all(color: Colors.grey),
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    // child: Column(children: [
-                    // Text(buttonPress.toString()),
-                    // Text(GlobalVariable().nomesProduto?[index].toString() ??
-                    //     'Nada...'),
-                    // Text(GlobalVariable()
-                    //         .quantidadesProdutos?[index]
-                    //         .toString() ??
-                    //     'Nada...'),
-                    // ]),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1123,6 +1338,7 @@ class _MainPage extends State<MainPage> {
                 await comprarProduto(buttonPresses, context);
                 // --------------------------------------------------------------- AQUI Q VAI CHAMAR O ESP
                 reloadPage(context);
+                sendMailParaCliente(buttonPresses, context);
               },
               child: Text('COMPRAR'),
             ),
