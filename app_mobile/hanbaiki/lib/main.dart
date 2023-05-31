@@ -407,9 +407,8 @@ Future<void> cadastrarProduto(
     'quadrante_produtos_app': quadranteProduto
   };
 
-  print(data);
-
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
+  var apiUrl = 'http://127.0.0.1:5000/updateProduct';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
 
   var uri = Uri.parse(apiUrl);
 
@@ -1414,6 +1413,11 @@ class _VendedorPageCadastroState extends State<VendedorPageCadastro> {
                 final form = _formKey.currentState;
                 if (form != null && form.validate()) {
                   form.save();
+                  if (GlobalVariable()._quadranteSelecionado == null) {
+                    GlobalVariable()._quadranteSelecionado =
+                        GlobalVariable()._quadrantes_disponiveis?[0];
+                  }
+                  print(GlobalVariable()._quadranteSelecionado);
                   cadastrarProduto(
                       _nomeProduto,
                       _quantidadeProduto,
@@ -1422,7 +1426,8 @@ class _VendedorPageCadastroState extends State<VendedorPageCadastro> {
                     if (dialogResult) {
                       // Dialog closed with OK button pressed
                       // Perform any additional logic here
-                      Navigator.of(context).pop();
+                      // Navigator.of(context).pop();
+                      reloadPage(context);
                     }
                   });
                 }
