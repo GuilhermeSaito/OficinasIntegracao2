@@ -409,8 +409,8 @@ Future<void> cadastrarProduto(
     'quadrante_produtos_app': quadranteProduto
   };
 
-  var apiUrl = 'http://127.0.0.1:5000/updateProduct';
-  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
+  // var apiUrl = 'http://127.0.0.1:5000/updateProduct';
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
 
   var uri = Uri.parse(apiUrl);
 
@@ -596,8 +596,8 @@ Future<void> signUp(
 
 Future<void> sendMailParaCliente(
     List<int> quantidadeProduto, BuildContext context) async {
-  var apiUrl = 'http://127.0.0.1:5000/sendEmail';
-  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/sendEmail';
+  // var apiUrl = 'http://127.0.0.1:5000/sendEmail';
+  var apiUrl = 'https://hanbaiki-api.herokuapp.com/sendEmail';
 
   String title = 'Compra efetuada por ${GlobalVariable()._email}';
   String content = 'Produtos comprados: ';
