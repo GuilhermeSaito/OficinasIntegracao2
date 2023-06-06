@@ -17,6 +17,14 @@ import 'dart:convert';
 // no
 
 void main() {
+  // final jsonData = {
+  //   'name': 'John Doe',
+  //   'age': 30,
+  //   'email': 'johndoe@example.com'
+  // };
+
+  // callESPToWork(jsonData);
+
   runApp(const MyApp());
 }
 
@@ -43,6 +51,24 @@ class GlobalVariable {
   List<String>? senhasCliente;
 
   List<int>? _quadrantes_disponiveis;
+}
+
+Future<void> callESPToWork(Map<String, dynamic> jsonData) async {
+  final url =
+      'http://your_esp_server_ip:your_port'; // Replace with your ESP server's IP and port
+  final headers = {'Content-Type': 'application/json'};
+
+  final response = await http.post(
+    Uri.parse(url),
+    headers: headers,
+    body: jsonEncode(jsonData),
+  );
+
+  if (response.statusCode == 200) {
+    print('JSON sent successfully!');
+  } else {
+    print('Failed to send JSON. Error: ${response.statusCode}');
+  }
 }
 
 // ---------------------------------- FUNCAO PARA VALIDAR O LOGIN
