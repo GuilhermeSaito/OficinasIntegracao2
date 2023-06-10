@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
 
+import 'package:web_socket_channel/io.dart';
+
 // ---------------------- PRECISA MUDAR DO LOCALHOST PARA O SERVIDOR!!!!
 
 // Conta como Vendedor
@@ -17,14 +19,6 @@ import 'dart:convert';
 // no
 
 void main() {
-  // final jsonData = {
-  //   'name': 'John Doe',
-  //   'age': 30,
-  //   'email': 'johndoe@example.com'
-  // };
-
-  // callESPToWork(jsonData);
-
   runApp(const MyApp());
 }
 
@@ -54,21 +48,11 @@ class GlobalVariable {
 }
 
 Future<void> callESPToWork(Map<String, dynamic> jsonData) async {
-  final url =
-      'http://your_esp_server_ip:your_port'; // Replace with your ESP server's IP and port
-  final headers = {'Content-Type': 'application/json'};
+  final channel = IOWebSocketChannel.connect('ws://192.168.0.101:81');
 
-  final response = await http.post(
-    Uri.parse(url),
-    headers: headers,
-    body: jsonEncode(jsonData),
-  );
+  channel.sink.add(jsonData.toString());
 
-  if (response.statusCode == 200) {
-    print('JSON sent successfully!');
-  } else {
-    print('Failed to send JSON. Error: ${response.statusCode}');
-  }
+  channel.sink.close();
 }
 
 // ---------------------------------- FUNCAO PARA VALIDAR O LOGIN
@@ -1017,6 +1001,27 @@ class _LoginPageState extends State<LoginPage> {
                                   return Text('');
                                 }
                               });
+                        }
+                      },
+                    ),
+                    SizedBox(
+                      height: 20.0,
+                    ),
+                    // ---------------------- CONFIRM BUTTON
+                    ElevatedButton(
+                      child: const Text('Mandar Dado ESP'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink[100],
+                      ),
+                      onPressed: () {
+                        final form = _formKey.currentState;
+                        if (form != null) {
+                          form.save();
+                          var jsonData = {
+                            "email": GlobalVariable()._email,
+                            "password": GlobalVariable()._password
+                          };
+                          callESPToWork(jsonData);
                         }
                       },
                     ),
