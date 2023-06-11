@@ -47,7 +47,16 @@ class GlobalVariable {
   List<int>? _quadrantes_disponiveis;
 }
 
-Future<void> callESPToWork(Map<String, dynamic> jsonData) async {
+Future<void> callESPToWork(
+    List<int> quantidadeProdutoComprado) async {
+  Map<String, dynamic> data = {
+    'quantidade': quantidadeProdutoComprado,
+    'quadrantes': GlobalVariable().quadrantesProdutos,
+    'numero': quantidadeProdutoComprado.length
+  };
+
+  var jsonData = jsonEncode(data);
+
   final channel = IOWebSocketChannel.connect('ws://192.168.0.101:81');
 
   channel.sink.add(jsonData.toString());
@@ -1004,27 +1013,6 @@ class _LoginPageState extends State<LoginPage> {
                         }
                       },
                     ),
-                    SizedBox(
-                      height: 20.0,
-                    ),
-                    // ---------------------- CONFIRM BUTTON
-                    ElevatedButton(
-                      child: const Text('Mandar Dado ESP'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink[100],
-                      ),
-                      onPressed: () {
-                        final form = _formKey.currentState;
-                        if (form != null) {
-                          form.save();
-                          var jsonData = {
-                            "email": GlobalVariable()._email,
-                            "password": GlobalVariable()._password
-                          };
-                          callESPToWork(jsonData);
-                        }
-                      },
-                    ),
                     Text(
                         '(Paciência é uma virtude, após apertar o botão, espere alguns segundos até acontecer alguma coisa no app)'),
                     SizedBox(height: 20),
@@ -1367,6 +1355,7 @@ class _MainPage extends State<MainPage> {
             ElevatedButton(
               onPressed: () async {
                 await comprarProduto(buttonPresses, context);
+                callESPToWork(buttonPresses);
                 // --------------------------------------------------------------- AQUI Q VAI CHAMAR O ESP
                 reloadPage(context);
                 sendMailParaCliente(buttonPresses, context);
