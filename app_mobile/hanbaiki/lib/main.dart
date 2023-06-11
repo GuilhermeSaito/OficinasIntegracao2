@@ -47,8 +47,7 @@ class GlobalVariable {
   List<int>? _quadrantes_disponiveis;
 }
 
-Future<void> callESPToWork(
-    List<int> quantidadeProdutoComprado) async {
+Future<void> callESPToWork(List<int> quantidadeProdutoComprado) async {
   Map<String, dynamic> data = {
     'quantidade': quantidadeProdutoComprado,
     'quadrantes': GlobalVariable().quadrantesProdutos,
@@ -1370,8 +1369,13 @@ class _MainPage extends State<MainPage> {
   // }
 }
 
+class CadastroPage extends StatefulWidget {
+  @override
+  _CadastroPageState createState() => _CadastroPageState();
+}
+
 // ----------------------- Pag de cadastro
-class CadastroPage extends StatelessWidget {
+class _CadastroPageState extends State<CadastroPage> {
   final _formKey = GlobalKey<FormState>();
 
   // Nome, email, password, vendedor
@@ -1379,6 +1383,7 @@ class CadastroPage extends StatelessWidget {
   String? _email;
   String? _password;
   int? _vendedor;
+  int? _selectedOption;
 
   @override
   Widget build(BuildContext context) {
@@ -1469,17 +1474,47 @@ class CadastroPage extends StatelessWidget {
             SimpleDialog(
               title: const Text("Quer ser Vendedor?"),
               children: <Widget>[
-                SimpleDialogOption(
-                  onPressed: () {
-                    _vendedor = 1;
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedOption = 1;
+                    });
                   },
-                  child: const Text('Yes'),
+                  child: Container(
+                    color: _selectedOption == 1
+                        ? Colors.pink[100] // Apply a different color or style
+                        : null,
+                    child: SimpleDialogOption(
+                      onPressed: () {
+                        setState(() {
+                          _selectedOption = 1;
+                          _vendedor = 1;
+                        });
+                      },
+                      child: const Text('Yes'),
+                    ),
+                  ),
                 ),
-                SimpleDialogOption(
-                  onPressed: () {
-                    _vendedor = 0;
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedOption = 0;
+                    });
                   },
-                  child: const Text('No'),
+                  child: Container(
+                    color: _selectedOption == 0
+                        ? Colors.pink[100] // Apply a different color or style
+                        : null,
+                    child: SimpleDialogOption(
+                      onPressed: () {
+                        setState(() {
+                          _selectedOption = 0;
+                          _vendedor = 0;
+                        });
+                      },
+                      child: const Text('No'),
+                    ),
+                  ),
                 ),
               ],
             ),
