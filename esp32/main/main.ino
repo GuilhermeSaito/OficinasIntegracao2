@@ -79,7 +79,7 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
           }
           else {
             Serial.println("Motor 4 ativado.");
-            motor4.step(stepsPerRevolution * -1);
+            motor4.step(stepsPerRevolution);
             digitalWrite (19, LOW);
             digitalWrite (22, LOW);
             digitalWrite (21, LOW);
@@ -106,32 +106,32 @@ void setup() {
   motor3.setSpeed(14);
   motor4.setSpeed(14);
 
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-  Serial.println("Connected to WiFi");
-  Serial.print("Server IP address: ");
-  Serial.println(WiFi.localIP());
+  // WiFi.begin(ssid, password);
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   delay(1000);
+  //   Serial.println("Connecting to WiFi...");
+  // }
+  // Serial.println("Connected to WiFi");
+  // Serial.print("Server IP address: ");
+  // Serial.println(WiFi.localIP());
 
-  webSocket.begin();
-  webSocket.onEvent(handleWebSocketEvent);
+  // webSocket.begin();
+  // webSocket.onEvent(handleWebSocketEvent);
 }
 
 void loop() {
-  // webSocket.loop();
+  webSocket.loop();
 
-  // Serial.println("Motor 1 ativado."); //debug
-  // motor1.step(-2050); //coloquei pra uma volta, tem q ver qual vai ser o padrão
-  // digitalWrite (27, LOW);
-  // digitalWrite (12, LOW);
-  // digitalWrite (14, LOW);
-  // digitalWrite (13, LOW);
-  // delay(1000);
+  Serial.println("Motor 1 ativado."); //debug
+  motor1.step(stepsPerRevolution * -1); //coloquei pra uma volta, tem q ver qual vai ser o padrão
+  digitalWrite (27, LOW);
+  digitalWrite (12, LOW);
+  digitalWrite (14, LOW);
+  digitalWrite (13, LOW);
+  delay(1000);
 
   // Serial.println("Motor 2 ativado.");
-  // motor2.step(-2050);
+  // motor2.step(stepsPerRevolution);
   // digitalWrite (26, LOW);
   // digitalWrite (33, LOW);
   // digitalWrite (25, LOW);
@@ -139,7 +139,7 @@ void loop() {
   // delay(1000);
 
   // Serial.println("Motor 3 ativado.");
-  // motor3.step(stepsPerRevolution); 
+  // motor3.step(stepsPerRevolution * -1); 
   // digitalWrite (2, LOW);
   // digitalWrite (5, LOW);
   // digitalWrite (4, LOW);

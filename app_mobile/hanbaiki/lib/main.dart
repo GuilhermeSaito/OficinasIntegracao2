@@ -43,6 +43,9 @@ class GlobalVariable {
   List<int>? quantidadesProdutos;
   List<int>? quadrantesProdutos;
   List<String>? senhasCliente;
+  List<String>? _chave_pix;
+  List<String>? _telefone;
+  List<double>? _valor_produto;
 
   List<int>? _quadrantes_disponiveis;
 }
@@ -56,7 +59,7 @@ Future<void> callESPToWork(List<int> quantidadeProdutoComprado) async {
 
   var jsonData = jsonEncode(data);
 
-  final channel = IOWebSocketChannel.connect('ws://192.168.0.101:81');
+  final channel = IOWebSocketChannel.connect('ws://192.168.0.103:81');
 
   channel.sink.add(jsonData.toString());
 
@@ -66,7 +69,8 @@ Future<void> callESPToWork(List<int> quantidadeProdutoComprado) async {
 // ---------------------------------- FUNCAO PARA VALIDAR O LOGIN
 Future<void> validateLoginApi(
     String? email, String? password, BuildContext context) async {
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/validateLogin';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/validateLogin';
+  var apiUrl = 'http://127.0.0.1:5000/validateLogin';
   var parameters = {
     'email': email,
     'password': password,
@@ -131,7 +135,8 @@ Future<void> validateLoginApi(
 
 // Funcao para mostrar todos os produtos na pagina do cliente
 Future<void> getProdutosQuadrante(BuildContext context) async {
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/getProdutosQuadrante';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/getProdutosQuadrante';
+  var apiUrl = 'http://127.0.0.1:5000/getProdutosQuadrante';
 
   var uri = Uri.parse(apiUrl);
 
@@ -173,8 +178,17 @@ Future<void> getProdutosQuadrante(BuildContext context) async {
           .toList();
       GlobalVariable().senhasCliente =
           responseData.map<String>((map) => map['password'] as String).toList();
+      GlobalVariable()._valor_produto = responseData
+          .map<double>((map) => double.parse(map['valor_produto']))
+          .toList();
+      GlobalVariable()._chave_pix = responseData
+          .map<String>((map) => map['chave_pix'] as String)
+          .toList();
+      GlobalVariable()._telefone =
+          responseData.map<String>((map) => map['telefone'] as String).toList();
     }
   } catch (e) {
+    print(e.toString());
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -195,7 +209,8 @@ Future<void> getProdutosQuadrante(BuildContext context) async {
 
 // ---------------------------------- FUNCAO PARA PERMITIR OU NAO O CADASTRO DE ITENS
 Future<bool> canInsertProduct(BuildContext context) async {
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/canInsertProduct';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/canInsertProduct';
+  var apiUrl = 'http://127.0.0.1:5000/canInsertProduct';
 
   var uri = Uri.parse(apiUrl);
 
@@ -339,10 +354,12 @@ Future<void> comprarProduto(
     'password_app': GlobalVariable().senhasCliente,
     'nome_produtos_app': GlobalVariable().nomesProduto,
     'quantidade_produtos_app': resultado_quantidade,
-    'quadrante_produtos_app': GlobalVariable().quadrantesProdutos
+    'quadrante_produtos_app': GlobalVariable().quadrantesProdutos,
+    'valorProduto': GlobalVariable()._valor_produto
   };
 
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
+  var apiUrl = 'http://127.0.0.1:5000/updateProduct';
 
   var uri = Uri.parse(apiUrl);
 
@@ -410,6 +427,7 @@ Future<void> comprarProduto(
 Future<void> cadastrarProduto(
   String? nomeProduto,
   String? quantidadeProduto,
+  String? valorProduto,
   int? quadranteProduto,
   BuildContext context,
   Function(bool) dialogCallback,
@@ -424,11 +442,12 @@ Future<void> cadastrarProduto(
     'password_app': GlobalVariable()._password,
     'nome_produtos_app': nomeProduto,
     'quantidade_produtos_app': quantidadeProduto,
+    'valorProduto': valorProduto,
     'quadrante_produtos_app': quadranteProduto
   };
 
-  // var apiUrl = 'http://127.0.0.1:5000/updateProduct';
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
+  var apiUrl = 'http://127.0.0.1:5000/updateProduct';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/updateProduct';
 
   var uri = Uri.parse(apiUrl);
 
@@ -464,7 +483,7 @@ Future<void> cadastrarProduto(
         builder: (context) => AlertDialog(
           title: Text('Cadastro Concluido com Sucesso!'),
           content: Text(
-              "Seu produto foi cadastrado com sucesso, agora só espere um desavisado cair na sua armadilha de ganhar dinheir fácil!" +
+              "(ESPERE ESSA MENSAGEM DESAPARECER) Seu produto foi cadastrado com sucesso, agora só espere um desavisado cair na sua armadilha de ganhar dinheir fácil!" +
                   responseData.toString()),
           actions: [
             TextButton(
@@ -495,21 +514,21 @@ Future<void> cadastrarProduto(
     );
   }
 
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text('Espera um pouco...'),
-      content: Text(''),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(true); // Close the dialog
-          },
-          child: Text('OK'),
-        ),
-      ],
-    ),
-  );
+  // showDialog(
+  //   context: context,
+  //   builder: (context) => AlertDialog(
+  //     title: Text('Espera um pouco...'),
+  //     content: Text(''),
+  //     actions: [
+  //       TextButton(
+  //         onPressed: () {
+  //           Navigator.of(context).pop(true); // Close the dialog
+  //         },
+  //         child: Text('OK'),
+  //       ),
+  //     ],
+  //   ),
+  // );
 
   dialogCallback(true);
 }
@@ -520,15 +539,20 @@ Future<void> signUp(
   String? email,
   String? password,
   int? _vendedor,
+  String? chave_pix,
+  String? telefone,
   BuildContext context,
   Function(bool) dialogCallback,
 ) async {
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/insertDataPessoa';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/insertDataPessoa';
+  var apiUrl = 'http://127.0.0.1:5000/insertDataPessoa';
   var parameters = {
     'nome': nome,
     'email': email,
     'password': password,
     'vendedor': _vendedor.toString(),
+    'chave_pix': chave_pix,
+    'telefone': telefone
   };
 
   var uri = Uri.parse(apiUrl).replace(queryParameters: parameters);
@@ -614,8 +638,8 @@ Future<void> signUp(
 
 Future<void> sendMailParaCliente(
     List<int> quantidadeProduto, BuildContext context) async {
-  // var apiUrl = 'http://127.0.0.1:5000/sendEmail';
-  var apiUrl = 'https://hanbaiki-api.herokuapp.com/sendEmail';
+  var apiUrl = 'http://127.0.0.1:5000/sendEmail';
+  // var apiUrl = 'https://hanbaiki-api.herokuapp.com/sendEmail';
 
   String title = 'Compra efetuada por ${GlobalVariable()._email}';
   String content = 'Produtos comprados: ';
@@ -992,9 +1016,6 @@ class _LoginPageState extends State<LoginPage> {
                         final form = _formKey.currentState;
                         if (form != null) {
                           form.save();
-                          validateLoginApi(GlobalVariable()._email,
-                              GlobalVariable()._password, context);
-
                           FutureBuilder(
                               future: getProdutosQuadrante(context),
                               builder: (BuildContext context,
@@ -1009,6 +1030,9 @@ class _LoginPageState extends State<LoginPage> {
                                   return Text('');
                                 }
                               });
+
+                          validateLoginApi(GlobalVariable()._email,
+                              GlobalVariable()._password, context);
                         }
                       },
                     ),
@@ -1301,7 +1325,6 @@ class _MainPage extends State<MainPage> {
                 itemCount: GlobalVariable().nomesCliente?.length,
                 itemBuilder: (context, index) {
                   final buttonPress = buttonPresses[index];
-                  // final teste_index = index;
                   return Container(
                     padding: EdgeInsets.all(16.0),
                     margin: EdgeInsets.all(8.0),
@@ -1313,12 +1336,27 @@ class _MainPage extends State<MainPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Name: ${GlobalVariable().nomesProduto?[index].toString()}',
+                          'Nome: ${GlobalVariable().nomesProduto?[index].toString()}',
                           style: TextStyle(fontSize: 18.0),
                         ),
                         SizedBox(height: 8.0),
                         Text(
-                          'Quantity: ${GlobalVariable().quantidadesProdutos?[index].toString()}',
+                          'Quantidade: ${GlobalVariable().quantidadesProdutos?[index].toString()}',
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                        SizedBox(height: 16.0),
+                        Text(
+                          'Valor Unitario: ${GlobalVariable()._valor_produto?[index].toString()}',
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                        SizedBox(height: 16.0),
+                        Text(
+                          'Pix do vendedor: ${GlobalVariable()._chave_pix?[index].toString()}',
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                        SizedBox(height: 16.0),
+                        Text(
+                          'Telefone do vendedor: ${GlobalVariable()._telefone?[index].toString()}',
                           style: TextStyle(fontSize: 16.0),
                         ),
                         SizedBox(height: 16.0),
@@ -1341,7 +1379,7 @@ class _MainPage extends State<MainPage> {
                         ),
                         SizedBox(height: 8.0),
                         Text(
-                          'Button Presses: $buttonPress',
+                          'Quantidade de Produto Selecionado: $buttonPress',
                           style: TextStyle(fontSize: 16.0),
                         ),
                         SizedBox(height: 8.0),
@@ -1355,7 +1393,6 @@ class _MainPage extends State<MainPage> {
               onPressed: () async {
                 await comprarProduto(buttonPresses, context);
                 callESPToWork(buttonPresses);
-                // --------------------------------------------------------------- AQUI Q VAI CHAMAR O ESP
                 reloadPage(context);
                 sendMailParaCliente(buttonPresses, context);
               },
@@ -1363,10 +1400,7 @@ class _MainPage extends State<MainPage> {
             ),
           ],
         ));
-    // }
   }
-  // );
-  // }
 }
 
 class CadastroPage extends StatefulWidget {
@@ -1378,10 +1412,12 @@ class CadastroPage extends StatefulWidget {
 class _CadastroPageState extends State<CadastroPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Nome, email, password, vendedor
+  // Nome, email, password, vendedor, chave_pix, telefone
   String? _nome;
   String? _email;
   String? _password;
+  String? _chave_pix;
+  String? _telefone;
   int? _vendedor;
   int? _selectedOption;
 
@@ -1417,6 +1453,30 @@ class _CadastroPageState extends State<CadastroPage> {
                 ),
                 onSaved: (String? value) {
                   _nome = value;
+                },
+              ),
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(45.0),
+                color: Colors.pink[100],
+              ),
+              width: MediaQuery.of(context).size.width * 2 / 3,
+              // ---------------------- EMAIL BOX
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'TELEFONE',
+                  labelStyle: TextStyle(
+                    color: Colors.white, // set the color of the label to white
+                  ),
+                  border: InputBorder.none,
+                  // Da pra colocar uns frurus aqui
+                ),
+                onSaved: (String? value) {
+                  _telefone = value;
                 },
               ),
             ),
@@ -1516,7 +1576,34 @@ class _CadastroPageState extends State<CadastroPage> {
                     ),
                   ),
                 ),
+                SizedBox(height: 20.0),
+                Visibility(
+                    visible: _vendedor == 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20.0),
+                        color: Colors.pink[100],
+                      ),
+                      width: MediaQuery.of(context).size.width * 2 / 3,
+                      // ---------------------- PASSWORD BOX
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'PIX',
+                          labelStyle: TextStyle(
+                            color: Colors
+                                .white, // set the color of the label to white
+                          ),
+                          border: InputBorder.none,
+                        ),
+                        onSaved: (String? value) {
+                          _chave_pix = value;
+                        },
+                      ),
+                    )),
               ],
+            ),
+            SizedBox(
+              height: 20.0,
             ),
             SizedBox(
               height: 20.0,
@@ -1531,8 +1618,8 @@ class _CadastroPageState extends State<CadastroPage> {
                 final form = _formKey.currentState;
                 if (form != null && form.validate()) {
                   form.save();
-                  signUp(_nome, _email, _password, _vendedor, context,
-                      (dialogResult) {
+                  signUp(_nome, _email, _password, _vendedor, _chave_pix,
+                      _telefone, context, (dialogResult) {
                     if (dialogResult) {
                       // Dialog closed with OK button pressed
                       // Perform any additional logic here
@@ -1575,10 +1662,11 @@ class VendedorPageCadastro extends StatefulWidget {
 class _VendedorPageCadastroState extends State<VendedorPageCadastro> {
   final _formKey = GlobalKey<FormState>();
 
-  // Nome, email, password, vendedor
+  // Nome, email, password, vendedor, precoProduto
   String? _nomeProduto;
   String? _quantidadeProduto;
   int? _quadranteProduto;
+  String? _valorProduto;
 
   // Variavel para atualizar o valor da tela, soh para ajudar
   int? selectedValue = GlobalVariable()._quadrantes_disponiveis?[0];
@@ -1647,6 +1735,30 @@ class _VendedorPageCadastroState extends State<VendedorPageCadastro> {
             ),
             Container(
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(45.0),
+                color: Colors.pink[100],
+              ),
+              width: MediaQuery.of(context).size.width * 2 / 3,
+              // ---------------------- EMAIL BOX
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'VALOR DO PRODUTO (UTILIZE . Ex.: 10.5)',
+                  labelStyle: TextStyle(
+                    color: Colors.white, // set the color of the label to white
+                  ),
+                  border: InputBorder.none,
+                  // Da pra colocar uns frurus aqui
+                ),
+                onSaved: (String? value) {
+                  _valorProduto = value;
+                },
+              ),
+            ),
+            SizedBox(
+              height: 20.0,
+            ),
+            Container(
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20.0),
                 color: Colors.pink[100],
               ),
@@ -1692,6 +1804,7 @@ class _VendedorPageCadastroState extends State<VendedorPageCadastro> {
                   cadastrarProduto(
                       _nomeProduto,
                       _quantidadeProduto,
+                      _valorProduto,
                       GlobalVariable()._quadranteSelecionado,
                       context, (dialogResult) {
                     if (dialogResult) {
